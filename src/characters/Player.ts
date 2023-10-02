@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { BLOCK_SIZE } from "../config/constant";
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(
     scene: Phaser.Scene,
@@ -11,10 +12,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
-    if (cursors?.left.isDown) {
+    console.log(this.body?.position.x)
+    if (cursors?.left.isDown && this.body?.position.x! > 0) {
       this.setVelocityX(-160);
       this.anims.play("left", true);
-    } else if (cursors?.right.isDown) {
+    } else if (cursors?.right.isDown && this.body?.position.x! < BLOCK_SIZE * 99) {
       this.setVelocityX(160);
       this.anims.play("right", true);
     } else {
@@ -74,7 +76,6 @@ Phaser.GameObjects.GameObjectFactory.register(
 
     // sprite.setBounce(0.2);
     // sprite.setCollideWorldBounds(true);
-
     return sprite;
   },
 );

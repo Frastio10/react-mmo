@@ -4,13 +4,14 @@ export default class WorldModel {
 
   id: string;
   name: string;
-  weatherType?: string;
+  weatherType: string;
 
   constructor() {
     this.blockArr = [];
     this.backgroundArr = [];
     this.id = "";
     this.name = "";
+    this.weatherType= "sky";
   }
 
   loadCopy(world: WorldModel) {

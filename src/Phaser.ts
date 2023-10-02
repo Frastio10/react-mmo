@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 // import { BLOCK_SIZE } from "./config/constant";
 
-import GameScene from "./scenes/GameScene";
+import Bootstrap from "./scenes/Bootstrap";
+import World from "./scenes/World";
 import Preloader from "./scenes/Preloader";
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -16,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: true,
     },
   },
-  scene: [Preloader, GameScene],
+  scene: [Preloader, Bootstrap, World],
 };
 
 
