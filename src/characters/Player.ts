@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { BLOCK_SIZE } from "../config/constant";
+import World from "../scenes/World";
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
+  world!: World;
+
   constructor(
     scene: Phaser.Scene,
     x: number,
@@ -11,11 +15,41 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, texture, frame);
   }
 
+  create(world: World) {
+    this.world = world;
+    this.world.input.on("pointerdown", this.handleWorldClick.bind(this));
+  }
+
+  handleWorldClick(ptr: Phaser.Input.Pointer) {
+    const currentPlayerTile = this.world.blockLayer?.worldToTileXY(
+      this.body!.x,
+      this.body!.y,
+    );
+
+    const currentSelectedTile = this.world.blockLayer?.worldToTileXY(
+      ptr.worldX,
+      ptr.worldY,
+    );
+
+    const sameCoor =
+      currentPlayerTile!.x === currentSelectedTile!.x &&
+      currentPlayerTile!.y === currentSelectedTile!.y;
+
+    if (ptr.rightButtonDown() && !sameCoor) {
+      this.world.placeTile(ptr.worldX, ptr.worldY);
+    }
+
+    if (ptr.leftButtonDown()) this.world.removeTile(ptr.worldX, ptr.worldY);
+  }
+
   update(cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
     if (cursors?.left.isDown && this.body?.position.x! > 0) {
       this.setVelocityX(-160);
       this.anims.play("left", true);
-    } else if (cursors?.right.isDown && this.body?.position.x! < BLOCK_SIZE * 100) {
+    } else if (
+      cursors?.right.isDown &&
+      this.body?.position.x! < BLOCK_SIZE * 100
+    ) {
       this.setVelocityX(160);
       this.anims.play("right", true);
     } else {
@@ -52,6 +86,7 @@ Phaser.GameObjects.GameObjectFactory.register(
     frame?: string | number,
   ) {
     const sprite = new Player(this.scene, x, y, texture, frame);
+    sprite.create(this.scene as World);
 
     this.displayList.add(sprite);
     this.updateList.add(sprite);

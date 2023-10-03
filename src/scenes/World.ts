@@ -39,13 +39,6 @@ export default class World extends Phaser.Scene {
     if (this.blockLayer) {
       this.physics.add.collider(this.localPlayer, this.blockLayer);
     }
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.rightButtonDown()) {
-        this.placeTile(pointer.worldX, pointer.worldY);
-      } else {
-        this.removeTile(pointer.worldX, pointer.worldY);
-      }
-    });
   }
 
   attachCamera() {
