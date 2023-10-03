@@ -5,7 +5,11 @@ export default class Preloader extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('mario-tiles', 'https://labs.phaser.io/assets/tilemaps/tiles/super-mario.png');
+    this.load.image(
+      "mario-tiles",
+      "https://labs.phaser.io/assets/tilemaps/tiles/super-mario.png",
+    );
+    this.load.image("gt-tiles_1", "gt-assets/tiles_page1.png");
     this.load.image("sky", "assets/img/sky.png");
     this.load.image("logo", "assets/img/bomb.png");
     this.load.image("red", "assets/particles/red.png");

@@ -12,11 +12,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
-    console.log(this.body?.position.x)
     if (cursors?.left.isDown && this.body?.position.x! > 0) {
       this.setVelocityX(-160);
       this.anims.play("left", true);
-    } else if (cursors?.right.isDown && this.body?.position.x! < BLOCK_SIZE * 99) {
+    } else if (cursors?.right.isDown && this.body?.position.x! < BLOCK_SIZE * 100) {
       this.setVelocityX(160);
       this.anims.play("right", true);
     } else {
@@ -24,7 +23,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.anims.play("turn");
     }
 
-    console.log(this.body?.blocked.down, this.body?.onCollide)
     if (cursors?.up.isDown && this.body?.blocked.down) {
       this.setVelocityY(-800);
     }
