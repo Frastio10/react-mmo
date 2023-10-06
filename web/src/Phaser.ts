@@ -8,8 +8,8 @@ import Preloader from "./scenes/Preloader";
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "phaser-container",
-  width: 1000,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
   physics: {
     default: "arcade",
     arcade: {
@@ -17,9 +17,10 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: true,
     },
   },
+  dom: {
+    createContainer: true,
+  },
   scene: [Preloader, Bootstrap, World],
 };
-
-
 
 export default new Phaser.Game(config);

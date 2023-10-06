@@ -1,9 +1,12 @@
 import Phaser from "phaser";
-import { BLOCK_SIZE } from "../config/constant";
 import World from "../scenes/World";
+import InventoryModel from "../models/InventoryModel";
+import { NavKeys } from "../types/KeyboardState";
+import { BEDROCK_ID } from "../config/constant";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   world!: World;
+  inventory = new InventoryModel();
 
   constructor(
     scene: Phaser.Scene,
@@ -35,21 +38,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       currentPlayerTile!.x === currentSelectedTile!.x &&
       currentPlayerTile!.y === currentSelectedTile!.y;
 
+    const isBedrock =
+      this.world.blockLayer?.getTileAt(
+        currentSelectedTile!.x,
+        currentSelectedTile!.y,
+      ).index === BEDROCK_ID;
+
     if (ptr.rightButtonDown() && !sameCoor) {
-      this.world.placeTile(ptr.worldX, ptr.worldY);
+      this.world.placeTile(this.inventory.selectedItem, ptr.worldX, ptr.worldY);
     }
 
-    if (ptr.leftButtonDown()) this.world.removeTile(ptr.worldX, ptr.worldY);
+    if (ptr.leftButtonDown() && !isBedrock) {
+      this.world.removeTile(ptr.worldX, ptr.worldY);
+    }
   }
 
-  update(cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
-    if (cursors?.left.isDown && this.body?.position.x! > 0) {
+  update(cursors: NavKeys) {
+    if (cursors?.left.isDown || cursors.A.isDown) {
       this.setVelocityX(-160);
       this.anims.play("left", true);
-    } else if (
-      cursors?.right.isDown &&
-      this.body?.position.x! < BLOCK_SIZE * 100
-    ) {
+    } else if (cursors?.right.isDown || cursors.D.isDown) {
       this.setVelocityX(160);
       this.anims.play("right", true);
     } else {
@@ -57,7 +65,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.anims.play("turn");
     }
 
-    if (cursors?.up.isDown && this.body?.blocked.down) {
+    if (cursors.shift.isDown) {
+      this.inventory.selectedItem += 1;
+    }
+
+    if (
+      this.body?.blocked.down &&
+      (cursors?.up.isDown || cursors?.space.isDown || cursors?.W.isDown)
+    ) {
       this.setVelocityY(-800);
     }
   }

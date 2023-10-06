@@ -1,6 +1,6 @@
 export default class WorldModel {
-  blockArr: number[];
-  backgroundArr: number[];
+  blockArr: number[][];
+  backgroundArr: number[][];
 
   id: string;
   name: string;

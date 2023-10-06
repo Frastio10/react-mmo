@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { createAnims } from "../anims/CharacterAnims";
 import "../characters/Player";
-import WorldModel from "../models/WorldModel";
+import WorldModel from "../models/Worlds/WorldModel";
+import { generateBasicWorldArrays } from "../utils/world";
 
 export default class Bootstrap extends Phaser.Scene {
   player!: Phaser.Physics.Arcade.Sprite;
@@ -18,6 +19,14 @@ export default class Bootstrap extends Phaser.Scene {
     this.cursor = this.input.keyboard?.createCursorKeys();
 
     createAnims(this.anims);
-    this.scene.launch("world", new WorldModel());
+
+    const world = new WorldModel();
+    const { blockArr, bgArr } = generateBasicWorldArrays();
+    world.blockArr = blockArr;
+    world.backgroundArr = bgArr;
+    world.id = "TEST";
+    world.name = "TEST_WORLD";
+
+    this.scene.launch("world", world);
   }
 }

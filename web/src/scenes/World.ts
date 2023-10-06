@@ -1,15 +1,15 @@
 import Phaser from "phaser";
-import WorldModel from "../models/WorldModel";
+import WorldModel from "../models/Worlds/WorldModel";
 import Player from "../characters/Player";
-import { createTilemap, generateBasicWorldArrays } from "../utils/world";
+import { createTilemap } from "../utils/world";
 import {
   BLOCK_SIZE,
   DEFAULT_AIR_ID,
-  DEFAULT_GROUND_BLOCK_ID,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from "../config/constant";
 import { BLOCK_COLLISION_EXCLUSION } from "../config/worldConfigs";
+import { Keyboard, NavKeys } from "../types/KeyboardState";
 
 export default class World extends Phaser.Scene {
   localPlayer!: Player;
@@ -18,6 +18,7 @@ export default class World extends Phaser.Scene {
   worldMetadata!: WorldModel;
 
   cursor?: Phaser.Types.Input.Keyboard.CursorKeys;
+  cursors!: NavKeys;
 
   constructor() {
     super("world");
@@ -27,8 +28,17 @@ export default class World extends Phaser.Scene {
     this.worldMetadata = world;
   }
 
+  registerKeys() {
+    this.cursors = {
+      ...this.input.keyboard!.createCursorKeys(),
+      ...(this.input.keyboard!.addKeys("W,S,A,D") as Keyboard),
+    };
+  }
+
   create() {
     this.cursor = this.input.keyboard?.createCursorKeys();
+    this.registerKeys();
+
     const bg = this.add.image(0, 0, this.worldMetadata.weatherType);
     bg.scale = 4;
 
@@ -39,6 +49,14 @@ export default class World extends Phaser.Scene {
     if (this.blockLayer) {
       this.physics.add.collider(this.localPlayer, this.blockLayer);
     }
+
+    this.add
+      .text(100, 60, this.worldMetadata.name, {
+        fontFamily: "Arial",
+        fontSize: 16,
+        color: "#ffffff",
+      })
+      .setScrollFactor(0);
   }
 
   attachCamera() {
@@ -70,17 +88,12 @@ export default class World extends Phaser.Scene {
     return layer.putTileAt(DEFAULT_AIR_ID, tile.x, tile.y);
   }
 
-  placeTile(worldX: number, worldY: number) {
+  placeTile(itemId: number, worldX: number, worldY: number) {
     const tileCoords = this.blockLayer?.worldToTileXY(worldX, worldY);
     const tile = this.blockLayer?.getTileAtWorldXY(worldX, worldY);
 
     if (tile && tile?.index === DEFAULT_AIR_ID && tileCoords) {
-      this.blockLayer?.putTileAt(
-        DEFAULT_GROUND_BLOCK_ID,
-        tileCoords.x,
-        tileCoords.y,
-      );
-
+      this.blockLayer?.putTileAt(itemId, tileCoords.x, tileCoords.y);
       return;
     }
   }
@@ -90,9 +103,8 @@ export default class World extends Phaser.Scene {
   }
 
   createMap() {
-    const { blockArr, bgArr } = generateBasicWorldArrays();
-    const map = createTilemap(this, blockArr);
-    const mapBg = createTilemap(this, bgArr);
+    const map = createTilemap(this, this.worldMetadata.blockArr);
+    const mapBg = createTilemap(this, this.worldMetadata.backgroundArr);
 
     const tiles = map.addTilesetImage("gt-tiles_1");
     const tileBg = mapBg.addTilesetImage("gt-tiles_1");
@@ -105,6 +117,6 @@ export default class World extends Phaser.Scene {
   }
 
   update() {
-    if (this.cursor) this.localPlayer.update(this.cursor);
+    if (this.cursors) this.localPlayer.update(this.cursors);
   }
 }
