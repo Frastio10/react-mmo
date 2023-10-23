@@ -10,3 +10,5 @@ export const DEFAULT_AIR_ID = 608 + 18;
 export const DEFAULT_BACKGROUND_BLOCK_ID = 1;
 
 export const BEDROCK_ID = (32 - 4) * 32;
+
+export const FIST_ID = 43

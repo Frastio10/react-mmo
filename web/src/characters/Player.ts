@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import World from "../scenes/World";
-import InventoryModel from "../models/InventoryModel";
+import InventoryModel from "../models/Inventory/InventoryModel";
 import { NavKeys } from "../types/KeyboardState";
 import { BEDROCK_ID } from "../config/constant";
+import store from "../stores";
+import { forceUpdate } from "../stores/inventoryStore";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   world!: World;
@@ -44,11 +46,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         currentSelectedTile!.y,
       ).index === BEDROCK_ID;
 
-    if (ptr.rightButtonDown() && !sameCoor) {
-      this.world.placeTile(this.inventory.selectedItem, ptr.worldX, ptr.worldY);
+    // ptr.rightButtonDown() &&
+    if (
+      ptr.leftButtonDown() &&
+      !sameCoor &&
+      this.inventory.selectedSlot.amount! > 0 &&
+      this.inventory.selectedSlot.slotId !== 0
+    ) {
+      if (!this.inventory.selectedSlot.item) return;
+
+      const isPlaced = this.world.placeTile(
+        this.inventory.selectedSlot.item.id,
+        ptr.worldX,
+        ptr.worldY,
+      );
+
+      if (isPlaced) this.inventory.selectedSlot.decrease();
     }
 
-    if (ptr.leftButtonDown() && !isBedrock) {
+    if (ptr.leftButtonDown() && !isBedrock && this.inventory.selectedSlot.slotId ===0) {
       this.world.removeTile(ptr.worldX, ptr.worldY);
     }
   }
@@ -66,7 +82,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (cursors.shift.isDown) {
-      this.inventory.selectedItem += 1;
+      if (!this.inventory.selectedSlot.item) return;
+      this.inventory.selectedSlot.item.id += 1
+      store.dispatch(forceUpdate(Math.random()))
+      console.log('update')
     }
 
     if (

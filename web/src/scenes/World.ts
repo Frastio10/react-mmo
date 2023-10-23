@@ -10,6 +10,10 @@ import {
 } from "../config/constant";
 import { BLOCK_COLLISION_EXCLUSION } from "../config/worldConfigs";
 import { Keyboard, NavKeys } from "../types/KeyboardState";
+import { setJoinWorld } from "../stores/WorldStore";
+import store from "../stores";
+import { initiateWorld } from "../stores/playerStore";
+// import { initiateWorld } from "../stores/playerStore";
 
 export default class World extends Phaser.Scene {
   localPlayer!: Player;
@@ -30,8 +34,8 @@ export default class World extends Phaser.Scene {
 
   registerKeys() {
     this.cursors = {
-      ...this.input.keyboard!.createCursorKeys(),
       ...(this.input.keyboard!.addKeys("W,S,A,D") as Keyboard),
+      ...this.input.keyboard!.createCursorKeys(),
     };
   }
 
@@ -57,6 +61,8 @@ export default class World extends Phaser.Scene {
         color: "#ffffff",
       })
       .setScrollFactor(0);
+
+    store.dispatch(initiateWorld(this));
   }
 
   attachCamera() {
@@ -94,12 +100,16 @@ export default class World extends Phaser.Scene {
 
     if (tile && tile?.index === DEFAULT_AIR_ID && tileCoords) {
       this.blockLayer?.putTileAt(itemId, tileCoords.x, tileCoords.y);
-      return;
+      this.blockLayer?.setCollisionByExclusion(BLOCK_COLLISION_EXCLUSION);
+      return true;
     }
+
+    return false;
   }
 
   addLocalPlayer() {
     this.localPlayer = this.add.Player(100, 450, "dude");
+    store.dispatch(setJoinWorld(true));
   }
 
   createMap() {
@@ -108,6 +118,10 @@ export default class World extends Phaser.Scene {
 
     const tiles = map.addTilesetImage("gt-tiles_1");
     const tileBg = mapBg.addTilesetImage("gt-tiles_1");
+
+    // var frameData = this.textures.getFrame("gt-tiles_1", 2);
+    var dataUrl = this.textures.getBase64("gt-tiles_1", 3);
+    console.log(dataUrl);
 
     if (tiles && tileBg) {
       this.backgroundLayer = mapBg.createLayer(0, tileBg, 0, 0);
