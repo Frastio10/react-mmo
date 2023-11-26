@@ -1,0 +1,50 @@
+[
+  {
+    "id": 3,
+    "displayName": "Red Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 626,
+    "displayName": "Air",
+    "type": 0,
+    "isCollide": false,
+    "health": 0,
+    "isBreakable": false
+  },
+  {
+    "id": 896,
+    "displayName": "Bedrock",
+    "type": 1,
+    "isCollide": true,
+    "health": 0,
+    "isBreakable": false
+  },
+  {
+    "id": 1,
+    "displayName": "Flowery Wallpaper",
+    "type": 2,
+    "isCollide": false,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 23,
+    "displayName": "Crappy Sign",
+    "type": 1,
+    "isCollide": false,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 35,
+    "displayName": "Daisy",
+    "type": 1,
+    "isCollide": false,
+    "health": 50,
+    "isBreakable": true
+  }
+]

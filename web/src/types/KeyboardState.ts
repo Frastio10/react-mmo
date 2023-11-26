@@ -5,6 +5,7 @@ export type Keyboard = {
   S: Phaser.Input.Keyboard.Key;
   A: Phaser.Input.Keyboard.Key;
   D: Phaser.Input.Keyboard.Key;
+  R: Phaser.Input.Keyboard.Key;
 };
 
 export type NavKeys = Keyboard & Phaser.Types.Input.Keyboard.CursorKeys;

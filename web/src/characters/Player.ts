@@ -2,9 +2,12 @@ import Phaser from "phaser";
 import World from "../scenes/World";
 import InventoryModel from "../models/Inventory/InventoryModel";
 import { NavKeys } from "../types/KeyboardState";
-import { BEDROCK_ID } from "../config/constant";
+import { BEDROCK_ID, DEFAULT_AIR_ID } from "../config/constant";
 import store from "../stores";
 import { forceUpdate } from "../stores/inventoryStore";
+import MathHelper from "../utils/MathHelper";
+import { hackerAlert } from "../utils";
+import ResourceManager from "../models/ResourceManager";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   world!: World;
@@ -40,12 +43,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       currentPlayerTile!.x === currentSelectedTile!.x &&
       currentPlayerTile!.y === currentSelectedTile!.y;
 
-    const isBedrock =
-      this.world.blockLayer?.getTileAt(
-        currentSelectedTile!.x,
-        currentSelectedTile!.y,
-      ).index === BEDROCK_ID;
-
     // ptr.rightButtonDown() &&
     if (
       ptr.leftButtonDown() &&
@@ -55,8 +52,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     ) {
       if (!this.inventory.selectedSlot.item) return;
 
+      const blockData = ResourceManager.getBlockData(
+        this.inventory.selectedSlot.item.id,
+      );
+      if (!blockData) return hackerAlert();
       const isPlaced = this.world.placeTile(
         this.inventory.selectedSlot.item.id,
+        blockData?.type,
         ptr.worldX,
         ptr.worldY,
       );
@@ -64,9 +66,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       if (isPlaced) this.inventory.selectedSlot.decrease();
     }
 
-    if (ptr.leftButtonDown() && !isBedrock && this.inventory.selectedSlot.slotId ===0) {
-      this.world.removeTile(ptr.worldX, ptr.worldY);
+    // !isBedrock &&
+    if (ptr.leftButtonDown() && this.inventory.selectedSlot.slotId === 0) {
+      const { x, y } = MathHelper.worldToTileXY(ptr.worldX, ptr.worldY);
+      const bg = this.world.getBackgroundAt(x, y);
+      const block = this.world.getBlockAt(x, y);
+
+      console.log(bg.metadata)
+      if (block.isBlock()) this.world.hitBlock(x, y);
+      if (bg.isBackground()) this.world.hitBackground(x, y);
     }
+  }
+
+  respawn() {
+    this.setY(0);
   }
 
   update(cursors: NavKeys) {
@@ -81,11 +94,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.anims.play("turn");
     }
 
+    // respawn
+    if (cursors.R.isDown) this.respawn();
+
     if (cursors.shift.isDown) {
       if (!this.inventory.selectedSlot.item) return;
-      this.inventory.selectedSlot.item.id += 1
-      store.dispatch(forceUpdate(Math.random()))
-      console.log('update')
+      this.inventory.selectedSlot.item.id += 1;
+      store.dispatch(forceUpdate(Math.random()));
+      console.log("update");
     }
 
     if (

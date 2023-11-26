@@ -2,15 +2,12 @@ import Phaser from "phaser";
 import { createAnims } from "../anims/CharacterAnims";
 import "../characters/Player";
 import WorldModel from "../models/Worlds/WorldModel";
-import { generateBasicWorldArrays } from "../utils/world";
+import WorldGenerator from "../utils/WorldGenerator";
 
 export default class Bootstrap extends Phaser.Scene {
   player!: Phaser.Physics.Arcade.Sprite;
   cursor?: Phaser.Types.Input.Keyboard.CursorKeys;
-  stars!: Phaser.Physics.Arcade.Group;
-  mapLayer!: Phaser.Tilemaps.TilemapLayer | null;
 
-  blockLayer!: Phaser.Tilemaps.TilemapLayer | null;
   constructor() {
     super("game");
   }
@@ -21,7 +18,7 @@ export default class Bootstrap extends Phaser.Scene {
     createAnims(this.anims);
 
     const world = new WorldModel();
-    const { blockArr, bgArr } = generateBasicWorldArrays();
+    const { blockArr, bgArr } = WorldGenerator.generateBasicWorldArrays();
     world.blockArr = blockArr;
     world.backgroundArr = bgArr;
     world.id = "TEST";

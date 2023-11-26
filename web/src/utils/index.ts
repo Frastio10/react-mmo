@@ -3,5 +3,9 @@ export function createArray(length: number, value = "") {
 }
 
 export function hackerAlert() {
-  console.log("Nice try buddy");
+  log("Nice try buddy");
+}
+
+export function log(data: any){
+  console.log(data)
 }
