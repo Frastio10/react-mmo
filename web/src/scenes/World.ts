@@ -127,7 +127,26 @@ export default class World extends Phaser.Scene {
     layer: Phaser.Tilemaps.TilemapLayer,
     tile: Phaser.Tilemaps.Tile,
   ) {
-    return layer.putTileAt(DEFAULT_AIR_ID, tile.x, tile.y);
+    const block = ResourceManager.getBlockData(tile.index);
+    const airData = ResourceManager.getBlockData(DEFAULT_AIR_ID);
+    if (!airData) return log("Failed to replace. Air data is not found.");
+
+    const newTile = layer.putTileAt(DEFAULT_AIR_ID, tile.x, tile.y);
+    const airBlock = new Block(
+      this,
+      new Phaser.Math.Vector2(tile.x, tile.y),
+      newTile,
+      airData,
+    );
+
+    if (block?.type === BlockTypes.BLOCK) {
+      this.setBlock(airBlock);
+      console.log("replaced setted");
+    } else if (block?.type === BlockTypes.BACKGROUND) {
+      this.setBackground(airBlock);
+    }
+
+    return newTile;
   }
 
   canHitBlock(tileX: number, tileY: number) {
@@ -141,8 +160,13 @@ export default class World extends Phaser.Scene {
     block.hit();
   }
 
-  setBlockAt(block: Block) {
+  setBlock(block: Block) {
     this.blockInstances[block.position.y][block.position.x] = block;
+    return block;
+  }
+
+  setBlockAt(tileX: number, tileY: number, block: Block) {
+    this.blockInstances[tileY][tileX] = block;
     return block;
   }
 
@@ -158,10 +182,16 @@ export default class World extends Phaser.Scene {
   }
 
   removeBackgroundAt(tileX: number, tileY: number) {
-    if (!this.canHitBackground(tileX, tileY)) return log("Cannot hit the block.");
+    if (!this.canHitBackground(tileX, tileY))
+      return log("Cannot hit the block.");
     const block = this.getBackgroundAt(tileX, tileY);
 
     return this.replaceWithAir(this.backgroundLayer!, block.tile);
+  }
+
+  setBackground(block: Block) {
+    this.backgroundInstances[block.position.y][block.position.x] = block;
+    return block;
   }
 
   placeTile(itemId: number, type: BlockTypes, worldX: number, worldY: number) {
@@ -190,7 +220,7 @@ export default class World extends Phaser.Scene {
 
       if (type === BlockTypes.BLOCK) {
         layer?.setCollisionByExclusion(BLOCK_COLLISION_EXCLUSION);
-        this.setBlockAt(block);
+        this.setBlock(block);
       }
 
       return true;

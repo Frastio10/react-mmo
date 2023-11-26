@@ -72,9 +72,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const bg = this.world.getBackgroundAt(x, y);
       const block = this.world.getBlockAt(x, y);
 
-      console.log(bg.metadata)
-      if (block.isBlock()) this.world.hitBlock(x, y);
-      if (bg.isBackground()) this.world.hitBackground(x, y);
+      console.log("is back", bg.metadata.displayName, block.metadata.displayName);
+      if (!block.isAir()) {
+        this.world.hitBlock(x, y);
+        console.log("ran punched", bg);
+      } else if (bg.isBackground()) {
+        console.log("is background", bg);
+        this.world.hitBackground(x, y);
+      }
     }
   }
 
