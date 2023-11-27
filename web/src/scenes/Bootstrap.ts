@@ -1,11 +1,10 @@
 import Phaser from "phaser";
 import { createAnims } from "../anims/CharacterAnims";
-import "../characters/Player";
+import "../characters/LocalPlayer";
 import WorldModel from "../models/Worlds/WorldModel";
 import WorldGenerator from "../utils/WorldGenerator";
 
 export default class Bootstrap extends Phaser.Scene {
-  player!: Phaser.Physics.Arcade.Sprite;
   cursor?: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {

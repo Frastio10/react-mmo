@@ -3,6 +3,8 @@ import InventorySlot from "../../models/Inventory/InventorySlot";
 import WorldModel from "../../scenes/World";
 import { useAppSelector } from "../../hooks";
 import { ReactNode } from "react";
+import ResourceManager from "../../models/ResourceManager";
+import { BlockTypes } from "../../types/Enums";
 
 interface SlotProps {
   slot?: InventorySlot;
@@ -32,7 +34,10 @@ export default function Slot({
       {children}
       {slot && slot.item && world && (
         <Thumb
-          src={world.textures.getBase64("gt-tiles_1", slot.item.id)}
+          src={world.textures.getBase64(
+            ResourceManager.getBlockSpriteSheetKey(slot.item.id),
+            slot.item.id,
+          )}
           draggable="false"
         />
       )}

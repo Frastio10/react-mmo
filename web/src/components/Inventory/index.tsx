@@ -25,11 +25,6 @@ export default function Inventory() {
     );
   }, []);
 
-  console.log(
-    world.localPlayer.inventory.highlightItems.map((slot) => slot.slotId),
-  );
-  console.log("sele", selectedSlot);
-
   return (
     <Wrapper id="inventory">
       {isInvOpen && <Window />}

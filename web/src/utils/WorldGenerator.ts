@@ -58,6 +58,7 @@ export default class WorldGenerator {
       tileHeight: BLOCK_SIZE,
     });
 
+
     return tilemap;
   }
 }

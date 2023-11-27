@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import WorldModel from "../models/Worlds/WorldModel";
-import Player from "../characters/Player";
+import "../characters/LocalPlayer";
+import LocalPlayer from "../characters/LocalPlayer";
 
 import {
   BLOCK_SIZE,
@@ -20,7 +21,7 @@ import WorldGenerator from "../utils/WorldGenerator";
 import { BlockTypes } from "../types/Enums";
 
 export default class World extends Phaser.Scene {
-  localPlayer!: Player;
+  localPlayer!: LocalPlayer;
   blockLayer!: Phaser.Tilemaps.TilemapLayer | null;
   backgroundLayer!: Phaser.Tilemaps.TilemapLayer | null;
   worldMetadata!: WorldModel;
@@ -141,7 +142,6 @@ export default class World extends Phaser.Scene {
 
     if (block?.type === BlockTypes.BLOCK) {
       this.setBlock(airBlock);
-      console.log("replaced setted");
     } else if (block?.type === BlockTypes.BACKGROUND) {
       this.setBackground(airBlock);
     }
@@ -230,7 +230,7 @@ export default class World extends Phaser.Scene {
   }
 
   addLocalPlayer() {
-    this.localPlayer = this.add.Player(100, 450, "dude");
+    this.localPlayer = this.add.LocalPlayer(100, 450, "dude");
     this.physics.add.collider(this.localPlayer, this.blockLayer!);
 
     store.dispatch(setJoinWorld(true));
@@ -243,15 +243,44 @@ export default class World extends Phaser.Scene {
       this.worldMetadata.backgroundArr,
     );
 
-    const tiles = map.addTilesetImage("gt-tiles_1");
-    const tileBg = mapBg.addTilesetImage("gt-tiles_1");
 
-    if (!tiles || !tileBg)
+    // const tiles = map.addTilesetImage("gt-tiles_1");
+    const tilesBlock = ResourceManager.getAllSpriteSheets().map(
+      (spriteSheet) => {
+        return map.addTilesetImage(spriteSheet.id)!;
+      },
+    );
+
+    const tilesBg = ResourceManager.getAllSpriteSheets().map((spriteSheet) => {
+      return mapBg.addTilesetImage(spriteSheet.id)!;
+    });
+    console.log("i", map.tiles);
+    console.log("bg", mapBg.tiles);
+
+    if (!tilesBg.length || !tilesBlock.length) {
       return log("Adding tileset failed. Tiles is invalid");
+    }
 
-    this.backgroundLayer = mapBg.createLayer(0, tileBg, 0, 0);
-    this.blockLayer = map.createLayer(0, tiles, 0, 0);
+    this.backgroundLayer = mapBg.createLayer(0, tilesBg, 0, 0);
+    this.blockLayer = map.createLayer(0, tilesBlock, 0, 0);
     this.blockLayer?.setCollisionByExclusion(BLOCK_COLLISION_EXCLUSION);
+
+    // const blocksData = ResourceManager.getBlocksByType(BlockTypes.BLOCK).map(
+    //   (block) => ({
+    //     id: block.id,
+    //   }),
+    // );
+
+    // const backgroundData = ResourceManager.getBlocksByType(
+    //   BlockTypes.BACKGROUND,
+    // ).map((block) => ({
+    //   id: block.id,
+    // }));
+
+    // const blocks = map.createFromObjects("block", blocksData);
+    // const backgrounds = mapBg.createFromObjects("background", backgroundData);
+
+    // console.log(blocks, backgrounds)
 
     this.blockInstances = this.worldMetadata.blockArr.map((rows, parentIdx) => {
       return rows.map((block, idx) => {

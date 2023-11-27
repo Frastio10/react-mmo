@@ -17,7 +17,6 @@ export const playerSlice = createSlice({
   reducers: {
     initiateWorld: (state, action: PayloadAction<any>) => {
       state.worldInstance = action.payload;
-      console.log("initiate", state.worldInstance);
     },
     setSelectedSlot: (state, action: PayloadAction<number>) => {
       const world = state.worldInstance as World;

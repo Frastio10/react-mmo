@@ -22,12 +22,12 @@ export default class InventoryModel {
 
     this.slots[0].setItem(new Item(FIST_ID, "Fist"), 0);
     this.slots[1].setItem(defaultBlock, 22);
-    this.slots[2].setItem(defaultBg, 22);
-    this.slots[3].setItem(new Item(23, "tsti"), 22);
-    this.slots[4].setItem(new Item(35, "tsti"), 22);
+    this.slots[5].setItem(defaultBg, 22);
+    this.slots[3].setItem(new Item(3, "tsti"), 22);
+    this.slots[4].setItem(new Item(5, "tsti"), 22);
+
 
     this.highlightItems = createArray(8).map((_, i) => this.slots[i]);
-    console.log("ran");
 
     this.selectedSlot = this.highlightItems[0];
   }

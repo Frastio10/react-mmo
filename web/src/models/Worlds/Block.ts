@@ -59,13 +59,10 @@ export default class Block {
     if (this.currentHealth <= 0) {
       this.destroy();
     }
-
-    console.log("current health:", this.currentHealth);
   }
 
   destroy() {
     clearTimeout(this.recoverTimeout);
-    console.log(this.isBackground());
     if (this.isBlock()) {
       this.world.removeBlockAt(this.position.x, this.position.y);
     } else if (this.isBackground()) {
@@ -75,8 +72,8 @@ export default class Block {
 
   onDestroyed() {}
 
-  getBase64Texture() {
-    return this.world.textures.getBase64("gt-tilkes_1", this.metadata.id);
+  getBase64Texture(key: string) {
+    return this.world.textures.getBase64(key, this.metadata.id);
   }
 
   isSolid() {
