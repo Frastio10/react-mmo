@@ -9,7 +9,7 @@ import { hackerAlert } from "../utils";
 import ResourceManager from "../models/ResourceManager";
 import Player from "./Player";
 
-export default class LocalPlayer extends Player{
+export default class LocalPlayer extends Player {
   world!: World;
   inventory = new InventoryModel();
   breakingRange = [6, 4];
@@ -66,7 +66,6 @@ export default class LocalPlayer extends Player{
 
       if (isPlaced) this.inventory.selectedSlot.decrease();
     }
-
     // !isBedrock &&
     if (ptr.leftButtonDown() && this.inventory.selectedSlot.slotId === 0) {
       const { x, y } = MathHelper.worldToTileXY(ptr.worldX, ptr.worldY);

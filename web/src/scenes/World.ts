@@ -6,6 +6,7 @@ import LocalPlayer from "../characters/LocalPlayer";
 import {
   BLOCK_SIZE,
   DEFAULT_AIR_ID,
+  MAX_PLAYER_RANGE,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from "../config/constant";
@@ -19,6 +20,7 @@ import Block from "../models/Worlds/Block";
 import ResourceManager from "../models/ResourceManager";
 import WorldGenerator from "../utils/WorldGenerator";
 import { BlockTypes } from "../types/Enums";
+import MathHelper from "../utils/MathHelper";
 
 export default class World extends Phaser.Scene {
   localPlayer!: LocalPlayer;
@@ -151,7 +153,10 @@ export default class World extends Phaser.Scene {
 
   canHitBlock(tileX: number, tileY: number) {
     const block = this.getBlockAt(tileX, tileY);
-    if (block.metadata.isBreakable) return true;
+    if (block.metadata.isBreakable && this.checkUpdateTileRange(tileX, tileY))
+      return true;
+
+    return false;
   }
 
   hitBlock(tileX: number, tileY: number) {
@@ -172,7 +177,11 @@ export default class World extends Phaser.Scene {
 
   canHitBackground(tileX: number, tileY: number) {
     const background = this.getBackgroundAt(tileX, tileY);
-    if (background.metadata.isBreakable) return true;
+    if (
+      background.metadata.isBreakable &&
+      this.checkUpdateTileRange(tileX, tileY)
+    )
+      return true;
   }
 
   hitBackground(tileX: number, tileY: number) {
@@ -184,9 +193,31 @@ export default class World extends Phaser.Scene {
   removeBackgroundAt(tileX: number, tileY: number) {
     if (!this.canHitBackground(tileX, tileY))
       return log("Cannot hit the block.");
-    const block = this.getBackgroundAt(tileX, tileY);
 
-    return this.replaceWithAir(this.backgroundLayer!, block.tile);
+    const block = this.getBackgroundAt(tileX, tileY);
+    console.log(block.metadata.displayName);
+
+    const airData = ResourceManager.getBlockData(DEFAULT_AIR_ID);
+    if (!airData) return log("Failed to replace. Air data is not found.");
+
+    const newTile = this.backgroundLayer!.putTileAt(
+      DEFAULT_AIR_ID,
+      block.position.x,
+      block.position.y,
+    );
+
+    const airBlock = new Block(
+      this,
+      new Phaser.Math.Vector2(block.position.x, block.position.y),
+      newTile,
+      airData,
+    );
+
+    this.setBackground(airBlock);
+
+    return newTile;
+
+    // return this.replaceWithAir(this.backgroundLayer!, block.tile);
   }
 
   setBackground(block: Block) {
@@ -194,14 +225,42 @@ export default class World extends Phaser.Scene {
     return block;
   }
 
+  checkUpdateTileRange(tileX: number, tileY: number) {
+    const sideMax = MAX_PLAYER_RANGE.x / 2;
+    const upperMax = MAX_PLAYER_RANGE.y / 2;
+
+    const tilePlayer = MathHelper.worldToTileXY(
+      this.localPlayer.body?.position.x!,
+      this.localPlayer.body?.position.y!,
+      false,
+    );
+
+    const frontBodyLimit = tilePlayer.x + sideMax;
+    const backBodyLimit = tilePlayer.x - sideMax;
+
+    const topBodyLimit = tilePlayer.y - upperMax;
+    const bottomBodyLimit = tilePlayer.y + upperMax;
+
+    const isInHorizontalRange =
+      frontBodyLimit >= tileX && backBodyLimit <= tileX;
+
+    const isInVerticalRange = topBodyLimit <= tileY && bottomBodyLimit >= tileY;
+
+    if (isInVerticalRange && isInHorizontalRange) return true;
+
+    return false;
+  }
+
   placeTile(itemId: number, type: BlockTypes, worldX: number, worldY: number) {
-    const tileCoords = this.blockLayer?.worldToTileXY(worldX, worldY);
-    const tile = this.blockLayer?.getTileAtWorldXY(worldX, worldY);
+    const tileCoords = this.blockLayer?.worldToTileXY(worldX, worldY)!;
+    const tile = this.blockLayer?.getTileAtWorldXY(worldX, worldY)!;
+
+    if (!this.checkUpdateTileRange(tile.x, tile.y)) return;
 
     const layer =
       type === BlockTypes.BLOCK ? this.blockLayer : this.backgroundLayer;
 
-    if (tile && tile?.index === DEFAULT_AIR_ID && tileCoords) {
+    if (tile.index === DEFAULT_AIR_ID) {
       const newTile = layer?.putTileAt(itemId, tileCoords.x, tileCoords.y);
       const coord = new Phaser.Math.Vector2(tileCoords.x, tileCoords.y);
 
@@ -218,15 +277,28 @@ export default class World extends Phaser.Scene {
         ResourceManager.getBlockData(itemId)!,
       );
 
-      if (type === BlockTypes.BLOCK) {
-        layer?.setCollisionByExclusion(BLOCK_COLLISION_EXCLUSION);
-        this.setBlock(block);
+      switch (type) {
+        case BlockTypes.BLOCK:
+          this.setBlock(block);
+          break;
+        case BlockTypes.BACKGROUND:
+          this.setBackground(block);
+          break;
       }
+
+      this.updateLayerCollision(this.blockLayer!);
 
       return true;
     }
 
     return false;
+  }
+
+  updateLayerCollision(
+    layer: Phaser.Tilemaps.TilemapLayer,
+    exclusionArray = BLOCK_COLLISION_EXCLUSION,
+  ) {
+    layer.setCollisionByExclusion(exclusionArray);
   }
 
   addLocalPlayer() {
@@ -242,7 +314,6 @@ export default class World extends Phaser.Scene {
       this,
       this.worldMetadata.backgroundArr,
     );
-
 
     // const tiles = map.addTilesetImage("gt-tiles_1");
     const tilesBlock = ResourceManager.getAllSpriteSheets().map(
@@ -263,7 +334,7 @@ export default class World extends Phaser.Scene {
 
     this.backgroundLayer = mapBg.createLayer(0, tilesBg, 0, 0);
     this.blockLayer = map.createLayer(0, tilesBlock, 0, 0);
-    this.blockLayer?.setCollisionByExclusion(BLOCK_COLLISION_EXCLUSION);
+    this.updateLayerCollision(this.blockLayer!);
 
     // const blocksData = ResourceManager.getBlocksByType(BlockTypes.BLOCK).map(
     //   (block) => ({
@@ -279,8 +350,6 @@ export default class World extends Phaser.Scene {
 
     // const blocks = map.createFromObjects("block", blocksData);
     // const backgrounds = mapBg.createFromObjects("background", backgroundData);
-
-    // console.log(blocks, backgrounds)
 
     this.blockInstances = this.worldMetadata.blockArr.map((rows, parentIdx) => {
       return rows.map((block, idx) => {

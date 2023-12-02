@@ -17,7 +17,7 @@ export default class Block {
   public metadata: BlockMetadata;
   public position: Phaser.Math.Vector2;
   public tile: Phaser.Tilemaps.Tile;
-  public currentHealth: number;
+  public currentHealth!: number;
   public recoverTimeout: number;
 
   constructor(
@@ -37,10 +37,15 @@ export default class Block {
     this.position = position;
     this.tile = tile;
     this.metadata = defaultOpts;
-    this.currentHealth = this.metadata.health!;
+    this.setHealth(this.metadata.health!);
   }
 
-  onCollideWithPlayer() {}
+  onCollideWithPlayer() {
+    console.log(this.metadata.displayName);
+    if (this.metadata?.displayName === "Red Block") {
+      this.tile.setAlpha(0.5);
+    }
+  }
 
   setHealth(health: number) {
     this.tile.setAlpha(health / 100);

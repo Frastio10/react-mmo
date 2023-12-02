@@ -17,3 +17,8 @@ export const BEDROCK_ID = 1;
 export const FIST_ID = 2;
 
 export const SPRITESHEET_SIZE = 1024;
+
+export const MAX_PLAYER_RANGE = {
+  x: 8,
+  y: 6,
+};
