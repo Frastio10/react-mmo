@@ -11,7 +11,7 @@ export default class WorldModel {
     this.backgroundArr = [];
     this.id = "";
     this.name = "";
-    this.weatherType= "sky";
+    this.weatherType = "sky";
   }
 
   loadCopy(world: WorldModel) {
@@ -20,5 +20,7 @@ export default class WorldModel {
     this.backgroundArr = world.backgroundArr;
     this.name = world.name;
     this.weatherType = world.weatherType;
+
+    return this;
   }
 }

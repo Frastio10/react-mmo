@@ -8,20 +8,26 @@ import MathHelper from "../utils/MathHelper";
 import { hackerAlert } from "../utils";
 import ResourceManager from "../models/ResourceManager";
 import Player from "./Player";
+import { BLOCK_SIZE, PLAYER_SIZE } from "../config/constant";
 
 export default class LocalPlayer extends Player {
   world!: World;
   inventory = new InventoryModel();
   breakingRange = [6, 4];
+  containerBody: Phaser.Physics.Arcade.Body;
 
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     texture: string,
+    id: string,
     frame?: string | number,
   ) {
-    super(scene, x, y, texture, frame);
+    super(scene, x, y, texture, id, frame);
+    this.setDepth(1000);
+    this.containerBody = this.playerContainer
+      .body as Phaser.Physics.Arcade.Body;
   }
 
   create(world: World) {
@@ -72,6 +78,8 @@ export default class LocalPlayer extends Player {
       const bg = this.world.getBackgroundAt(x, y);
       const block = this.world.getBlockAt(x, y);
 
+      console.log(block, bg);
+
       if (!block.isAir()) {
         this.world.hitBlock(x, y);
       } else if (bg.isBackground()) {
@@ -82,17 +90,25 @@ export default class LocalPlayer extends Player {
 
   respawn() {
     this.setY(0);
+    this.playerContainer.setY(0);
   }
 
   update(cursors: NavKeys) {
-    if (cursors?.left.isDown || cursors.A.isDown) {
-      this.setVelocityX(-160);
+    const speed = 160;
+    let vx = 0;
+    let vy = 0;
+
+    if (
+      (cursors?.left.isDown || cursors.A.isDown) &&
+      this.x > PLAYER_SIZE.x / 2
+    ) {
+      vx -= speed;
       this.anims.play("left", true);
     } else if (cursors?.right.isDown || cursors.D.isDown) {
-      this.setVelocityX(160);
+      vx += speed;
       this.anims.play("right", true);
     } else {
-      this.setVelocityX(0);
+      vx = 0;
       this.anims.play("turn");
     }
 
@@ -109,8 +125,13 @@ export default class LocalPlayer extends Player {
       this.body?.blocked.down &&
       (cursors?.up.isDown || cursors?.space.isDown || cursors?.W.isDown)
     ) {
-      this.setVelocityY(-800);
+      vy -= 800;
+      this.setVelocityY(vy);
+      this.containerBody.setVelocityY(vy);
     }
+
+    this.setVelocityX(vx);
+    this.containerBody.setVelocityX(vx);
   }
 }
 
@@ -147,19 +168,29 @@ Phaser.GameObjects.GameObjectFactory.register(
       Phaser.Physics.Arcade.DYNAMIC_BODY,
     );
 
-    const collisionScale = [0.5, 0.2];
+    // const collisionScale = [1, 0.5];
+    // sprite.body
+    //   ?.setSize(
+    //     sprite.width * collisionScale[0],
+    //     sprite.height * collisionScale[1],
+    //   )
+    //   .setOffset(
+    //     sprite.width * (1 - collisionScale[0]) * 0.5,
+    //     sprite.height * (1 - collisionScale[1]),
+    //   );
+    //
+    //
     sprite.body
-      ?.setSize(
-        sprite.width * collisionScale[0],
-        sprite.height * collisionScale[1],
-      )
-      .setOffset(
-        sprite.width * (1 - collisionScale[0]) * 0.5,
-        sprite.height * (1 - collisionScale[1]),
-      );
+      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
+      .setOffset(1, PLAYER_SIZE.y / 1.4);
+
+    sprite.containerBody
+      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
+      .setOffset(1, PLAYER_SIZE.y / 1.4);
 
     // sprite.setBounce(0.2);
     // sprite.setCollideWorldBounds(true);
+    // sprite.containerBody.setCollideWorldBounds(true);
     return sprite;
   },
 );

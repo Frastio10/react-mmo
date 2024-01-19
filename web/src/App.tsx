@@ -8,6 +8,8 @@ function App() {
   // useEffect(() => {
   //   store.dispatch(setJoinWorld(true));
   // }, []);
+  //
+  document.body.style.overflow = "hidden";
 
   let ui: JSX.Element;
   if (isWorldJoined) {

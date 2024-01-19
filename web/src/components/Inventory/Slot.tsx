@@ -4,7 +4,6 @@ import WorldModel from "../../scenes/World";
 import { useAppSelector } from "../../hooks";
 import { ReactNode } from "react";
 import ResourceManager from "../../models/ResourceManager";
-import { BlockTypes } from "../../types/Enums";
 
 interface SlotProps {
   slot?: InventorySlot;

@@ -4,7 +4,12 @@ export const BLOCK_SIZE = 32;
 export const WORLD_HEIGHT = 35;
 export const WORLD_WIDTH = 50;
 
-export const GROUND_HEIGHT = 5;
+export const PLAYER_SIZE = {
+  x: 28,
+  y: 28,
+};
+
+export const GROUND_HEIGHT = 10;
 export const maxBlankHeight = WORLD_HEIGHT - GROUND_HEIGHT;
 
 export const DEFAULT_GROUND_BLOCK_ID = 4;

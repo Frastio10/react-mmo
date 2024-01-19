@@ -28,6 +28,10 @@ export default class ResourceManager {
     return (blocks as BlockMetadata[]).filter((block) => !block.isCollide);
   }
 
+  static getCollidableBlocks() {
+    return (blocks as BlockMetadata[]).filter((block) => block.isCollide);
+  }
+
   static searchBlockByName(name: string) {
     return (blocks as BlockMetadata[]).filter((block) =>
       block.displayName.includes(name),

@@ -70,6 +70,8 @@ export default class World extends Phaser.Scene {
       })
       .setScrollFactor(0);
 
+    // this.updateLayerCollision(this.blockLayer!);
+    // this.updateCollisions();
     store.dispatch(initiateWorld(this));
   }
 
@@ -148,6 +150,8 @@ export default class World extends Phaser.Scene {
       this.setBackground(airBlock);
     }
 
+    // this.updateLayerCollision(this.blockLayer!);
+    this.updateCollisions();
     return newTile;
   }
 
@@ -167,11 +171,17 @@ export default class World extends Phaser.Scene {
 
   setBlock(block: Block) {
     this.blockInstances[block.position.y][block.position.x] = block;
+    this.worldMetadata.blockArr[block.position.y][block.position.x] =
+      block.metadata.id;
+
     return block;
   }
 
   setBlockAt(tileX: number, tileY: number, block: Block) {
     this.blockInstances[tileY][tileX] = block;
+    this.worldMetadata.blockArr[block.position.y][block.position.x] =
+      block.metadata.id;
+
     return block;
   }
 
@@ -222,6 +232,9 @@ export default class World extends Phaser.Scene {
 
   setBackground(block: Block) {
     this.backgroundInstances[block.position.y][block.position.x] = block;
+    this.worldMetadata.backgroundArr[block.position.y][block.position.x] =
+      block.metadata.id;
+
     return block;
   }
 
@@ -286,7 +299,8 @@ export default class World extends Phaser.Scene {
           break;
       }
 
-      this.updateLayerCollision(this.blockLayer!);
+      // this.updateLayerCollision(this.blockLayer!);
+      this.updateCollisions();
 
       return true;
     }
@@ -298,12 +312,21 @@ export default class World extends Phaser.Scene {
     layer: Phaser.Tilemaps.TilemapLayer,
     exclusionArray = BLOCK_COLLISION_EXCLUSION,
   ) {
+    console.log("update");
     layer.setCollisionByExclusion(exclusionArray);
+  }
+
+  updateCollisions() {
+    this.updateLayerCollision(this.blockLayer!);
+    this.updateLayerCollision(this.backgroundLayer!);
   }
 
   addLocalPlayer() {
     this.localPlayer = this.add.LocalPlayer(100, 450, "dude");
-    this.physics.add.collider(this.localPlayer, this.blockLayer!);
+    this.physics.add.collider(
+      [this.localPlayer, this.localPlayer.playerContainer],
+      this.blockLayer!,
+    );
 
     store.dispatch(setJoinWorld(true));
   }
@@ -325,8 +348,6 @@ export default class World extends Phaser.Scene {
     const tilesBg = ResourceManager.getAllSpriteSheets().map((spriteSheet) => {
       return mapBg.addTilesetImage(spriteSheet.id)!;
     });
-    console.log("i", map.tiles);
-    console.log("bg", mapBg.tiles);
 
     if (!tilesBg.length || !tilesBlock.length) {
       return log("Adding tileset failed. Tiles is invalid");
@@ -334,22 +355,8 @@ export default class World extends Phaser.Scene {
 
     this.backgroundLayer = mapBg.createLayer(0, tilesBg, 0, 0);
     this.blockLayer = map.createLayer(0, tilesBlock, 0, 0);
-    this.updateLayerCollision(this.blockLayer!);
-
-    // const blocksData = ResourceManager.getBlocksByType(BlockTypes.BLOCK).map(
-    //   (block) => ({
-    //     id: block.id,
-    //   }),
-    // );
-
-    // const backgroundData = ResourceManager.getBlocksByType(
-    //   BlockTypes.BACKGROUND,
-    // ).map((block) => ({
-    //   id: block.id,
-    // }));
-
-    // const blocks = map.createFromObjects("block", blocksData);
-    // const backgrounds = mapBg.createFromObjects("background", backgroundData);
+    // this.updateLayerCollision(this.blockLayer!);
+    this.updateCollisions();
 
     this.blockInstances = this.worldMetadata.blockArr.map((rows, parentIdx) => {
       return rows.map((block, idx) => {
@@ -389,6 +396,8 @@ export default class World extends Phaser.Scene {
         });
       },
     );
+
+    console.log("FInished");
   }
 
   update() {
