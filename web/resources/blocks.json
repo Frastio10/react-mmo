@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "displayName": "Bedrock",
+    "type": 1,
+    "isCollide": true,
+    "health": 0,
+    "isBreakable": false
+  },
+  {
+    "id": 2,
+    "displayName": "Fist",
+    "type": 1,
+    "isCollide": true,
+    "health": 0,
+    "isBreakable": false
+  },
+
+  {
+    "id": 3,
+    "displayName": "Gray Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 4,
+    "displayName": "Red Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 5,
+    "displayName": "Orange Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 5,
+    "displayName": "Yellow Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 5,
+    "displayName": "Green Block",
+    "type": 1,
+    "isCollide": true,
+    "health": 100,
+    "isBreakable": true
+  },
+
+  {
+    "id": 17,
+    "displayName": "Flowery Wallpaper",
+    "type": 2,
+    "isCollide": false,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 23,
+    "displayName": "Crappy Sign",
+    "type": 1,
+    "isCollide": false,
+    "health": 100,
+    "isBreakable": true
+  },
+  {
+    "id": 35,
+    "displayName": "Daisy",
+    "type": 1,
+    "isCollide": false,
+    "health": 50,
+    "isBreakable": true
+  },
+  {
+    "id": 50,
+    "displayName": "Air",
+    "type": 0,
+    "isCollide": false,
+    "health": 0,
+    "isBreakable": false
+  }
+]
