@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import WorldModel from "../models/Worlds/WorldModel";
 import "../characters/LocalPlayer";
+import "../characters/RemotePlayer";
 import LocalPlayer from "../characters/LocalPlayer";
 
 import {
@@ -22,9 +23,12 @@ import WorldGenerator from "../utils/WorldGenerator";
 import { BlockTypes } from "../types/Enums";
 import MathHelper from "../utils/MathHelper";
 import { EventKey, eventManager } from "../events/EventManager";
+import RemotePlayer from "../characters/RemotePlayer";
+import Network from "../services/Network";
 
 export default class World extends Phaser.Scene {
   localPlayer!: LocalPlayer;
+  remotePlayers!: RemotePlayer[];
   blockLayer!: Phaser.Tilemaps.TilemapLayer | null;
   backgroundLayer!: Phaser.Tilemaps.TilemapLayer | null;
   worldMetadata!: WorldModel;
@@ -36,13 +40,15 @@ export default class World extends Phaser.Scene {
   cursors!: NavKeys;
 
   resourceManager!: ResourceManager;
+  network!: Network;
 
   constructor() {
     super("world");
   }
 
-  init(world: WorldModel) {
+  init({ world, network }: { world: WorldModel; network: Network }) {
     this.worldMetadata = world;
+    this.network = network;
   }
 
   registerKeys() {
@@ -54,6 +60,7 @@ export default class World extends Phaser.Scene {
 
   create() {
     this.cursor = this.input.keyboard?.createCursorKeys();
+    this.remotePlayers = [];
     this.registerKeys();
 
     const bg = this.add.image(0, 0, this.worldMetadata.weatherType);
@@ -377,11 +384,20 @@ export default class World extends Phaser.Scene {
 
   addLocalPlayer() {
     this.localPlayer = this.add.LocalPlayer(100, 450, "dude");
+    const ply = this.add.RemotePlayer(100, 450, "dude");
+    this.remotePlayers.push(ply);
     this.physics.add.collider(
       [this.localPlayer, this.localPlayer.playerContainer],
       this.blockLayer!,
     );
 
+    this.physics.add.collider(
+      [
+        ...this.remotePlayers,
+        ...this.remotePlayers.map((ply) => ply.playerContainer),
+      ],
+      this.blockLayer!,
+    );
     store.dispatch(setJoinWorld(true));
   }
 

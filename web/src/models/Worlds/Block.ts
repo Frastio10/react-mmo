@@ -52,8 +52,9 @@ export default class Block {
     this.currentHealth = Math.max(health, 0);
   }
 
-  hit(damage = 40) {
+  hit(damage = 25) {
     if (this.isAir()) return;
+    console.log(this.currentHealth, this.isAir());
     this.setHealth(this.currentHealth - damage);
 
     clearTimeout(this.recoverTimeout);
