@@ -10,7 +10,7 @@ import ResourceManager from "../models/ResourceManager";
 import Player from "./Player";
 import { PLAYER_SIZE } from "../config/constant";
 
-export default class LocalPlayer extends Player {
+export default class RemotePlayer extends Player {
   world!: World;
   inventory = new InventoryModel();
   breakingRange = [6, 4];
@@ -138,18 +138,18 @@ export default class LocalPlayer extends Player {
 declare global {
   namespace Phaser.GameObjects {
     interface GameObjectFactory {
-      LocalPlayer(
+      RemotePlayer(
         x: number,
         y: number,
         texture: string,
         frame?: string | number,
-      ): LocalPlayer;
+      ): RemotePlayer;
     }
   }
 }
 
 Phaser.GameObjects.GameObjectFactory.register(
-  "LocalPlayer",
+  "RemotePlayer",
   function (
     this: Phaser.GameObjects.GameObjectFactory,
     x: number,
@@ -157,7 +157,7 @@ Phaser.GameObjects.GameObjectFactory.register(
     texture: string,
     frame?: string | number,
   ) {
-    const sprite = new LocalPlayer(this.scene, x, y, texture, "huh", frame);
+    const sprite = new RemotePlayer(this.scene, x, y, texture, "huh", frame);
     sprite.create(this.scene as World);
 
     this.displayList.add(sprite);

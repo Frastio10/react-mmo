@@ -3,6 +3,7 @@ import { createAnims } from "../anims/CharacterAnims";
 import "../characters/LocalPlayer";
 import WorldModel from "../models/Worlds/WorldModel";
 import WorldGenerator from "../utils/WorldGenerator";
+import Network from "../services/Network";
 
 export default class Bootstrap extends Phaser.Scene {
   cursor?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -23,6 +24,7 @@ export default class Bootstrap extends Phaser.Scene {
     world.id = "TEST";
     world.name = "TEST_WORLD";
 
-    this.scene.launch("world", world);
+    const network = new Network();
+    this.scene.launch("world", { world, network });
   }
 }
