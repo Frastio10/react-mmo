@@ -10,6 +10,8 @@ export function log(data: any) {
   console.log(data);
 }
 
+export const NOOP = () => {};
+
 export function safeJSONParse(str: any) {
   let parsed;
 

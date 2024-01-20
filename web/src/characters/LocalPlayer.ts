@@ -100,6 +100,7 @@ declare global {
         x: number,
         y: number,
         texture: string,
+        id: string,
         frame?: string | number,
       ): LocalPlayer;
     }
@@ -113,9 +114,10 @@ Phaser.GameObjects.GameObjectFactory.register(
     x: number,
     y: number,
     texture: string,
+    id: string,
     frame?: string | number,
   ) {
-    const sprite = new LocalPlayer(this.scene, x, y, texture, "tai", frame);
+    const sprite = new LocalPlayer(this.scene, x, y, texture, id, frame);
     sprite.create(this.scene as World);
 
     this.displayList.add(sprite);

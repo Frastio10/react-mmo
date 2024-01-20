@@ -85,6 +85,7 @@ declare global {
         x: number,
         y: number,
         texture: string,
+        id: string,
         frame?: string | number,
       ): RemotePlayer;
     }
@@ -98,9 +99,10 @@ Phaser.GameObjects.GameObjectFactory.register(
     x: number,
     y: number,
     texture: string,
+    id: string,
     frame?: string | number,
   ) {
-    const sprite = new RemotePlayer(this.scene, x, y, texture, "huh", frame);
+    const sprite = new RemotePlayer(this.scene, x, y, texture, id, frame);
     sprite.create(this.scene as World);
 
     this.displayList.add(sprite);

@@ -1,4 +1,4 @@
-import { log, safeJSONParse } from "../utils";
+import { NOOP, log, safeJSONParse } from "../utils";
 
 type NetOpts = {
   useBase64Encoding: boolean;
@@ -6,18 +6,38 @@ type NetOpts = {
 
 export default class Socket extends WebSocket {
   opts: NetOpts;
+  onJson: (data: any) => void;
+  onConnected: () => void;
 
   constructor(url: string | URL, opts?: NetOpts, protocol?: string | string[]) {
     super(url, protocol);
 
     const defaultOpts: NetOpts = {
-      useBase64Encoding: true,
+      useBase64Encoding: false,
     };
 
     this.opts = {
       ...defaultOpts,
       ...opts,
     };
+
+    this.onJson = NOOP;
+    this.onConnected = NOOP;
+
+    this.addEventListener("open", this.onOpenSocket.bind(this));
+    this.addEventListener("message", this.onMessageBuffer.bind(this));
+  }
+
+  onOpenSocket() {
+    console.log("Open");
+    this.onConnected();
+  }
+
+  onMessageBuffer(ev: MessageEvent) {
+    const data = ev.data;
+    const json = this.readJSON(data);
+
+    if (json) this.onJson(json);
   }
 
   sendJSON(json: { [key: string]: any }) {

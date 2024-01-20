@@ -68,8 +68,6 @@ export default class World extends Phaser.Scene {
 
     this.createMap();
     this.attachListeners();
-    this.addLocalPlayer();
-    this.attachCamera();
 
     this.add
       .text(100, 60, this.worldMetadata.name, {
@@ -82,6 +80,11 @@ export default class World extends Phaser.Scene {
     // this.updateLayerCollision(this.blockLayer!);
     // this.updateCollisions();
     store.dispatch(initiateWorld(this));
+  }
+
+  onNetworkRegistered() {
+    this.addLocalPlayer();
+    this.attachCamera();
   }
 
   attachCamera() {
@@ -383,8 +386,16 @@ export default class World extends Phaser.Scene {
   }
 
   addLocalPlayer() {
-    this.localPlayer = this.add.LocalPlayer(100, 450, "dude");
-    const ply = this.add.RemotePlayer(100, 450, "dude");
+    const name = "tomi";
+    eventManager.emit(EventKey.REQUEST_JOIN, {
+      x: 100,
+      y: 450,
+      name,
+    });
+
+    this.localPlayer = this.add.LocalPlayer(100, 450, "dude", name);
+    this.localPlayer.playerName.setText(name);
+    const ply = this.add.RemotePlayer(100, 450, "dude", name);
     this.remotePlayers.push(ply);
     this.physics.add.collider(
       [this.localPlayer, this.localPlayer.playerContainer],
@@ -405,6 +416,7 @@ export default class World extends Phaser.Scene {
     this.input.on("pointerdown", this.handleWorldClick.bind(this));
 
     eventManager.on(EventKey.TILE_UPDATE, this.onTileUpdate, this);
+    eventManager.on(EventKey.NET_REGISTERED, this.onNetworkRegistered, this);
     eventManager.emit(EventKey.TILE_UPDATE, true);
     log("Events attached.");
   }
@@ -478,6 +490,6 @@ export default class World extends Phaser.Scene {
   }
 
   update() {
-    if (this.cursors) this.localPlayer.update(this.cursors);
+    if (this.cursors && this.localPlayer) this.localPlayer.update(this.cursors);
   }
 }
