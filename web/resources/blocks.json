@@ -4,7 +4,7 @@
     "displayName": "Bedrock",
     "type": 1,
     "isCollide": true,
-    "health": 0,
+    "health": 100,
     "isBreakable": false
   },
   {
@@ -15,7 +15,6 @@
     "health": 0,
     "isBreakable": false
   },
-
   {
     "id": 3,
     "displayName": "Gray Block",
@@ -56,7 +55,6 @@
     "health": 100,
     "isBreakable": true
   },
-
   {
     "id": 17,
     "displayName": "Flowery Wallpaper",

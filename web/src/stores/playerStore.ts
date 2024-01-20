@@ -23,7 +23,6 @@ export const playerSlice = createSlice({
 
       world.localPlayer.inventory.setSelectedSlot(action.payload);
       // const slot = player.inventory.findItemSlot(action.payload);
-      // if(!slot) return console.log("You sneaky")
 
       state.selectedSlot = action.payload;
     },

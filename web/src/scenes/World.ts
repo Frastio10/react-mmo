@@ -15,12 +15,13 @@ import { Keyboard, NavKeys } from "../types/KeyboardState";
 import { setJoinWorld } from "../stores/WorldStore";
 import store from "../stores";
 import { initiateWorld } from "../stores/playerStore";
-import { log } from "../utils";
+import { hackerAlert, log } from "../utils";
 import Block from "../models/Worlds/Block";
 import ResourceManager from "../models/ResourceManager";
 import WorldGenerator from "../utils/WorldGenerator";
 import { BlockTypes } from "../types/Enums";
 import MathHelper from "../utils/MathHelper";
+import { EventKey, eventManager } from "../events/EventManager";
 
 export default class World extends Phaser.Scene {
   localPlayer!: LocalPlayer;
@@ -59,6 +60,7 @@ export default class World extends Phaser.Scene {
     bg.scale = 4;
 
     this.createMap();
+    this.attachListeners();
     this.addLocalPlayer();
     this.attachCamera();
 
@@ -151,7 +153,7 @@ export default class World extends Phaser.Scene {
     }
 
     // this.updateLayerCollision(this.blockLayer!);
-    this.updateCollisions();
+    eventManager.emit(EventKey.TILE_UPDATE, airBlock);
     return newTile;
   }
 
@@ -205,7 +207,6 @@ export default class World extends Phaser.Scene {
       return log("Cannot hit the block.");
 
     const block = this.getBackgroundAt(tileX, tileY);
-    console.log(block.metadata.displayName);
 
     const airData = ResourceManager.getBlockData(DEFAULT_AIR_ID);
     if (!airData) return log("Failed to replace. Air data is not found.");
@@ -224,6 +225,7 @@ export default class World extends Phaser.Scene {
     );
 
     this.setBackground(airBlock);
+    eventManager.emit(EventKey.TILE_UPDATE, airBlock);
 
     return newTile;
 
@@ -264,14 +266,66 @@ export default class World extends Phaser.Scene {
     return false;
   }
 
+  handleWorldClick(ptr: Phaser.Input.Pointer) {
+    const currentPlayerTile = this.blockLayer?.worldToTileXY(
+      this.localPlayer.body!.x,
+      this.localPlayer.body!.y,
+    );
+
+    const currentSelectedTile = this.blockLayer?.worldToTileXY(
+      ptr.worldX,
+      ptr.worldY,
+    );
+
+    const sameCoor =
+      currentPlayerTile!.x === currentSelectedTile!.x &&
+      currentPlayerTile!.y === currentSelectedTile!.y;
+
+    // ptr.rightButtonDown() &&
+    if (
+      ptr.leftButtonDown() &&
+      !sameCoor &&
+      this.localPlayer.inventory.selectedSlot.amount! > 0 &&
+      this.localPlayer.inventory.selectedSlot.slotId !== 0
+    ) {
+      if (!this.localPlayer.inventory.selectedSlot.item) return;
+
+      const blockData = ResourceManager.getBlockData(
+        this.localPlayer.inventory.selectedSlot.item.id,
+      );
+      if (!blockData) return hackerAlert();
+      const isPlaced = this.placeTile(
+        this.localPlayer.inventory.selectedSlot.item.id,
+        blockData?.type,
+        ptr.worldX,
+        ptr.worldY,
+      );
+
+      if (isPlaced) this.localPlayer.inventory.selectedSlot.decrease();
+    }
+    // !isBedrock &&
+    if (
+      ptr.leftButtonDown() &&
+      this.localPlayer.inventory.selectedSlot.slotId === 0
+    ) {
+      const { x, y } = MathHelper.worldToTileXY(ptr.worldX, ptr.worldY);
+      const bg = this.getBackgroundAt(x, y);
+      const block = this.getBlockAt(x, y);
+
+      if (!block.isAir()) {
+        this.hitBlock(x, y);
+      } else if (bg.isBackground()) {
+        this.hitBackground(x, y);
+      }
+    }
+  }
+
   placeTile(itemId: number, type: BlockTypes, worldX: number, worldY: number) {
-    const tileCoords = this.blockLayer?.worldToTileXY(worldX, worldY)!;
-    const tile = this.blockLayer?.getTileAtWorldXY(worldX, worldY)!;
-
-    if (!this.checkUpdateTileRange(tile.x, tile.y)) return;
-
     const layer =
       type === BlockTypes.BLOCK ? this.blockLayer : this.backgroundLayer;
+    const tileCoords = layer?.worldToTileXY(worldX, worldY)!;
+    const tile = layer?.getTileAtWorldXY(worldX, worldY)!;
+    if (!this.checkUpdateTileRange(tile.x, tile.y)) return;
 
     if (tile.index === DEFAULT_AIR_ID) {
       const newTile = layer?.putTileAt(itemId, tileCoords.x, tileCoords.y);
@@ -300,7 +354,7 @@ export default class World extends Phaser.Scene {
       }
 
       // this.updateLayerCollision(this.blockLayer!);
-      this.updateCollisions();
+      eventManager.emit(EventKey.TILE_UPDATE, block);
 
       return true;
     }
@@ -312,13 +366,13 @@ export default class World extends Phaser.Scene {
     layer: Phaser.Tilemaps.TilemapLayer,
     exclusionArray = BLOCK_COLLISION_EXCLUSION,
   ) {
-    console.log("update");
     layer.setCollisionByExclusion(exclusionArray);
   }
 
   updateCollisions() {
     this.updateLayerCollision(this.blockLayer!);
     this.updateLayerCollision(this.backgroundLayer!);
+    log("Collisions updated");
   }
 
   addLocalPlayer() {
@@ -331,6 +385,43 @@ export default class World extends Phaser.Scene {
     store.dispatch(setJoinWorld(true));
   }
 
+  attachListeners() {
+    this.input.on("pointerdown", this.handleWorldClick.bind(this));
+
+    eventManager.on(EventKey.TILE_UPDATE, this.onTileUpdate, this);
+    eventManager.emit(EventKey.TILE_UPDATE, true);
+    log("Events attached.");
+  }
+
+  onTileUpdate() {
+    this.updateCollisions();
+    log("Tile updated.");
+  }
+
+  // basically convert tile arr to instances of Block class based on the tile data
+  addTileInstances(tileArr: number[][], layer: Phaser.Tilemaps.TilemapLayer) {
+    const instances = tileArr.map((rows, parentIdx) => {
+      return rows.map((block, idx) => {
+        const blockData = ResourceManager.getBlockData(block)!;
+        const cord = new Phaser.Math.Vector2(idx, parentIdx);
+        const tile = layer?.getTileAt(idx, parentIdx)!;
+
+        if (!blockData) {
+          return new Block(
+            this,
+            cord,
+            tile,
+            ResourceManager.getBlockData(DEFAULT_AIR_ID)!,
+          );
+        }
+
+        return new Block(this, cord, tile, blockData);
+      });
+    });
+
+    return instances;
+  }
+
   createMap() {
     const map = WorldGenerator.createTilemap(this, this.worldMetadata.blockArr);
     const mapBg = WorldGenerator.createTilemap(
@@ -338,7 +429,6 @@ export default class World extends Phaser.Scene {
       this.worldMetadata.backgroundArr,
     );
 
-    // const tiles = map.addTilesetImage("gt-tiles_1");
     const tilesBlock = ResourceManager.getAllSpriteSheets().map(
       (spriteSheet) => {
         return map.addTilesetImage(spriteSheet.id)!;
@@ -355,49 +445,20 @@ export default class World extends Phaser.Scene {
 
     this.backgroundLayer = mapBg.createLayer(0, tilesBg, 0, 0);
     this.blockLayer = map.createLayer(0, tilesBlock, 0, 0);
+    this.backgroundLayer?.setDepth(1);
+    this.blockLayer?.setDepth(2);
+
     // this.updateLayerCollision(this.blockLayer!);
-    this.updateCollisions();
+    // this.updateCollisions()
 
-    this.blockInstances = this.worldMetadata.blockArr.map((rows, parentIdx) => {
-      return rows.map((block, idx) => {
-        const blockData = ResourceManager.getBlockData(block)!;
-        const cord = new Phaser.Math.Vector2(idx, parentIdx);
-        const tile = this.blockLayer?.getTileAt(idx, parentIdx)!;
-
-        if (!blockData) {
-          return new Block(
-            this,
-            cord,
-            tile,
-            ResourceManager.getBlockData(DEFAULT_AIR_ID)!,
-          );
-        }
-
-        return new Block(this, cord, tile, blockData);
-      });
-    });
-
-    this.backgroundInstances = this.worldMetadata.backgroundArr.map(
-      (rows, parentIdx) => {
-        return rows.map((block, idx) => {
-          const blockData = ResourceManager.getBlockData(block)!; // add handler if invalid id
-          const cord = new Phaser.Math.Vector2(idx, parentIdx);
-          const tile = this.blockLayer?.getTileAt(idx, parentIdx)!;
-          if (!blockData) {
-            return new Block(
-              this,
-              cord,
-              tile,
-              ResourceManager.getBlockData(DEFAULT_AIR_ID)!,
-            );
-          }
-
-          return new Block(this, cord, tile, blockData);
-        });
-      },
+    this.blockInstances = this.addTileInstances(
+      this.worldMetadata.blockArr,
+      this.blockLayer!,
     );
-
-    console.log("FInished");
+    this.backgroundInstances = this.addTileInstances(
+      this.worldMetadata.backgroundArr,
+      this.backgroundLayer!,
+    );
   }
 
   update() {

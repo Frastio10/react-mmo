@@ -4,17 +4,17 @@ import InventoryModel from "../models/Inventory/InventoryModel";
 import { NavKeys } from "../types/KeyboardState";
 import store from "../stores";
 import { forceUpdate } from "../stores/inventoryStore";
-import MathHelper from "../utils/MathHelper";
-import { hackerAlert } from "../utils";
-import ResourceManager from "../models/ResourceManager";
 import Player from "./Player";
-import { BLOCK_SIZE, PLAYER_SIZE } from "../config/constant";
+import { PLAYER_SIZE } from "../config/constant";
 
 export default class LocalPlayer extends Player {
   world!: World;
   inventory = new InventoryModel();
   breakingRange = [6, 4];
   containerBody: Phaser.Physics.Arcade.Body;
+
+  maxJumpRange = 15;
+  jumpTimer = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -32,60 +32,6 @@ export default class LocalPlayer extends Player {
 
   create(world: World) {
     this.world = world;
-    this.world.input.on("pointerdown", this.handleWorldClick.bind(this));
-  }
-
-  handleWorldClick(ptr: Phaser.Input.Pointer) {
-    const currentPlayerTile = this.world.blockLayer?.worldToTileXY(
-      this.body!.x,
-      this.body!.y,
-    );
-
-    const currentSelectedTile = this.world.blockLayer?.worldToTileXY(
-      ptr.worldX,
-      ptr.worldY,
-    );
-
-    const sameCoor =
-      currentPlayerTile!.x === currentSelectedTile!.x &&
-      currentPlayerTile!.y === currentSelectedTile!.y;
-
-    // ptr.rightButtonDown() &&
-    if (
-      ptr.leftButtonDown() &&
-      !sameCoor &&
-      this.inventory.selectedSlot.amount! > 0 &&
-      this.inventory.selectedSlot.slotId !== 0
-    ) {
-      if (!this.inventory.selectedSlot.item) return;
-
-      const blockData = ResourceManager.getBlockData(
-        this.inventory.selectedSlot.item.id,
-      );
-      if (!blockData) return hackerAlert();
-      const isPlaced = this.world.placeTile(
-        this.inventory.selectedSlot.item.id,
-        blockData?.type,
-        ptr.worldX,
-        ptr.worldY,
-      );
-
-      if (isPlaced) this.inventory.selectedSlot.decrease();
-    }
-    // !isBedrock &&
-    if (ptr.leftButtonDown() && this.inventory.selectedSlot.slotId === 0) {
-      const { x, y } = MathHelper.worldToTileXY(ptr.worldX, ptr.worldY);
-      const bg = this.world.getBackgroundAt(x, y);
-      const block = this.world.getBlockAt(x, y);
-
-      console.log(block, bg);
-
-      if (!block.isAir()) {
-        this.world.hitBlock(x, y);
-      } else if (bg.isBackground()) {
-        this.world.hitBackground(x, y);
-      }
-    }
   }
 
   respawn() {
@@ -95,43 +41,55 @@ export default class LocalPlayer extends Player {
 
   update(cursors: NavKeys) {
     const speed = 160;
-    let vx = 0;
-    let vy = 0;
+    const isOnGround = this.body?.blocked.down;
 
-    if (
-      (cursors?.left.isDown || cursors.A.isDown) &&
-      this.x > PLAYER_SIZE.x / 2
-    ) {
-      vx -= speed;
+    const velocity = {
+      x: 0,
+      y: 0,
+    };
+
+    const controls = {
+      left: cursors?.left.isDown || cursors.A.isDown,
+      right: cursors?.right.isDown || cursors.D.isDown,
+      respawn: cursors.R.isDown,
+      changeInv: cursors.shift.isDown,
+      jump: cursors?.up.isDown || cursors?.space.isDown || cursors?.W.isDown,
+    };
+
+    if (controls.left && this.x > PLAYER_SIZE.x / 2) {
+      velocity.x -= speed;
       this.anims.play("left", true);
-    } else if (cursors?.right.isDown || cursors.D.isDown) {
-      vx += speed;
+    } else if (controls.right) {
+      velocity.x += speed;
       this.anims.play("right", true);
     } else {
-      vx = 0;
+      velocity.x = 0;
       this.anims.play("turn");
     }
 
     // respawn
-    if (cursors.R.isDown) this.respawn();
+    if (controls.respawn) this.respawn();
 
-    if (cursors.shift.isDown) {
+    if (controls.changeInv) {
       if (!this.inventory.selectedSlot.item) return;
       this.inventory.selectedSlot.item.id += 1;
       store.dispatch(forceUpdate(Math.random()));
     }
 
-    if (
-      this.body?.blocked.down &&
-      (cursors?.up.isDown || cursors?.space.isDown || cursors?.W.isDown)
-    ) {
-      vy -= 800;
-      this.setVelocityY(vy);
-      this.containerBody.setVelocityY(vy);
+    if (controls.jump && this.jumpTimer < this.maxJumpRange) {
+      this.jumpTimer = Math.min(this.jumpTimer + 1, this.maxJumpRange);
+
+      // if (this.body?.blocked.down) {
+      velocity.y -= 30 * this.jumpTimer;
+      this.setVelocityY(velocity.y);
+      this.containerBody.setVelocityY(velocity.y);
+      // }
     }
 
-    this.setVelocityX(vx);
-    this.containerBody.setVelocityX(vx);
+    if (isOnGround) this.jumpTimer = 0;
+
+    this.setVelocityX(velocity.x);
+    this.containerBody.setVelocityX(velocity.x);
   }
 }
 
@@ -157,7 +115,7 @@ Phaser.GameObjects.GameObjectFactory.register(
     texture: string,
     frame?: string | number,
   ) {
-    const sprite = new LocalPlayer(this.scene, x, y, texture, frame);
+    const sprite = new LocalPlayer(this.scene, x, y, texture, "tai", frame);
     sprite.create(this.scene as World);
 
     this.displayList.add(sprite);
@@ -167,6 +125,14 @@ Phaser.GameObjects.GameObjectFactory.register(
       sprite,
       Phaser.Physics.Arcade.DYNAMIC_BODY,
     );
+
+    sprite.body
+      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
+      .setOffset(1, PLAYER_SIZE.y / 1.4);
+
+    sprite.containerBody
+      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
+      .setOffset(1, PLAYER_SIZE.y / 1.4);
 
     // const collisionScale = [1, 0.5];
     // sprite.body
@@ -180,14 +146,6 @@ Phaser.GameObjects.GameObjectFactory.register(
     //   );
     //
     //
-    sprite.body
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
-
-    sprite.containerBody
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
-
     // sprite.setBounce(0.2);
     // sprite.setCollideWorldBounds(true);
     // sprite.containerBody.setCollideWorldBounds(true);

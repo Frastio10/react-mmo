@@ -17,7 +17,8 @@ export const DEFAULT_AIR_ID = ResourceManager.searchBlockByName("Air")[0].id;
 export const DEFAULT_BACKGROUND_BLOCK_ID =
   ResourceManager.searchBlockByName("Flowery Wallpaper")[0].id;
 
-export const BEDROCK_ID = 1;
+export const BEDROCK_ID =
+  ResourceManager.searchBlockByName("Bedrock")[0].id;
 
 export const FIST_ID = 2;
 

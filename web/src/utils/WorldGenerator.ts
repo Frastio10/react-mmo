@@ -26,9 +26,8 @@ export default class WorldGenerator {
       const array = Array(WORLD_WIDTH).fill(DEFAULT_GROUND_BLOCK_ID);
       blockArr.push(array);
     }
-
     // bedrock
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < GROUND_HEIGHT; i++) {
       const array = Array(WORLD_WIDTH).fill(BEDROCK_ID);
       blockArr.push(array);
     }
