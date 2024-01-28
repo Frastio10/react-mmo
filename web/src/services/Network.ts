@@ -3,12 +3,34 @@ import Socket from "../net/Socket";
 import { log } from "../utils";
 import { PacketKeys, createJoinPacket, createPongPacket } from "./Packets";
 
+const networkEvents = new Map<PacketKeys, ((data: any) => void) | undefined>();
+
+type NetworkEventDecorator = (
+  target: any,
+  propertyKey: string,
+  descriptor: TypedPropertyDescriptor<(data: any) => void>,
+) => void;
+
+function NetworkEvent(eventKey: PacketKeys): NetworkEventDecorator {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: TypedPropertyDescriptor<(data: any) => void>,
+  ) {
+    const originalMethod = descriptor.value;
+
+    networkEvents.set(eventKey, originalMethod);
+
+    return descriptor;
+  };
+}
+
 export default class Network {
   ws: Socket;
   netID: null | string;
   status: number;
   constructor() {
-    this.ws = new Socket("ws://192.168.1.20:8081");
+    this.ws = new Socket("ws://localhost:8081");
     this.netID = null;
     this.status = 0;
     this.attachListeners();
@@ -21,39 +43,73 @@ export default class Network {
     eventManager.on(EventKey.REQUEST_JOIN, this.sendJoinPlayer.bind(this));
   }
 
-  handleConnectedNetwork() {
-    console.log("hm");
-  }
-
   handleIncomingMessage(json: any) {
-    switch (json.ID) {
-      case PacketKeys.NET_REGISTER:
-        this.onRegisterPacket(json);
-        break;
-      case PacketKeys.JOIN_REQUEST:
-        if (json.netID !== this.netID) this.onRemotePlayerJoined(json);
-        break;
-      case PacketKeys.NET_PING:
-        this.onPingPacket();
-        break;
-    }
+    const networkKey = json.ID as PacketKeys;
+    const handler = networkEvents.get(networkKey);
+    if (handler) handler.call(this, json);
+    // switch (json.ID) {
+    //   case PacketKeys.NET_REGISTER:
+    //     this.onRegisterPacket(json);
+    //     break;
+
+    //   case PacketKeys.JOIN_REQUEST:
+    //     if (json.netID !== this.netID) this.onRemotePlayerJoined(json);
+    //     break;
+
+    //   case PacketKeys.NET_PING:
+    //     this.onPingPacket(json);
+    //     break;
+
+    //   case PacketKeys.ANOTHER_PLAYER_JOINED:
+    //     this.onOtherPlayerJoined(json);
+    //     break;
+
+    //   case PacketKeys.ANOTHER_PLAYER_UPDATED:
+    //     this.onRemotePlayerUpdated(json);
+    //     break;
+
+    //   case PacketKeys.INIT_PLAYERS:
+    //     this.onInitPlayers(json);
+    //     break;
+    // }
   }
 
-  onPingPacket() {
-    if (!this.netID) return log("No netID.");
-    this.ws.sendJSON(createPongPacket(this.netID));
+  handleConnectedNetwork() {
+    console.log("Connected to network");
   }
 
+  @NetworkEvent(PacketKeys.INIT_PLAYERS)
+  onInitPlayers(data: any) {
+    eventManager.emit(EventKey.INIT_PLAYERS, data);
+  }
+
+  @NetworkEvent(PacketKeys.ANOTHER_PLAYER_JOINED)
+  onOtherPlayerJoined(data: any) {
+    eventManager.emit(EventKey.ANOTHER_PLAYER_JOINED, data);
+  }
+
+  @NetworkEvent(PacketKeys.ANOTHER_PLAYER_UPDATED)
+  onRemotePlayerUpdated(data: any) {
+    eventManager.emit(EventKey.ANOTHER_PLAYER_UPDATED, data);
+  }
+
+  @NetworkEvent(PacketKeys.NET_REGISTER)
   onRegisterPacket(data: any) {
     this.netID = data.netID;
     this.status = 1;
 
     eventManager.emit(EventKey.NET_REGISTERED, this.netID);
-    console.log(this.netID);
   }
 
+  @NetworkEvent(PacketKeys.NET_PING)
+  onPingPacket(_: any) {
+    if (!this.netID) return log("No netID.");
+    this.ws.sendJSON(createPongPacket(this.netID));
+  }
+
+  @NetworkEvent(PacketKeys.ANOTHER_PLAYER_JOINED)
   onRemotePlayerJoined(data: any) {
-    console.log("other:", data);
+    eventManager.emit(EventKey.ANOTHER_PLAYER_JOINED, data);
   }
 
   sendJoinPlayer(data: any) {
@@ -61,11 +117,22 @@ export default class Network {
 
     this.ws.sendJSON(
       createJoinPacket({
-        playerId: this.netID,
-        playerName: data.playerName,
-        posX: data.x,
-        posY: data.y,
+        netID: this.netID,
+        playerID: this.netID,
+        name: data.name,
+        x: data.x,
+        y: data.y,
       }),
     );
+  }
+
+  updatePlayer(x: number, y: number) {
+    this.ws.sendJSON({
+      ID: "PLAYER.MOVE",
+      playerID: this.netID,
+      netID: this.netID,
+      posX: x,
+      posY: y,
+    });
   }
 }

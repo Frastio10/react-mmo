@@ -65,9 +65,9 @@ module.exports = class Client {
         this.handleChat(packet);
         break;
 
-      case "MOVE_LEFT":
-      case "MOVE_RIGHT":
-      case "STOP":
+      // case "MOVE_LEFT":
+      // case "MOVE_RIGHT":
+      case "MOVE":
       case "JUMP":
         this.handleMovement(packet);
         break;
@@ -94,7 +94,7 @@ module.exports = class Client {
   }
 
   handleMovement(packet) {
-    console.log(packet.data)
+    console.log(packet.data);
     const playerClient = this.server.clients.get(packet.data.playerID);
     playerClient.user.posX = packet.data.posX;
     playerClient.user.posY = packet.data.posY;

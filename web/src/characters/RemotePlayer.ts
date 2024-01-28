@@ -23,8 +23,7 @@ export default class RemotePlayer extends Player {
   ) {
     super(scene, x, y, texture, id, frame);
     this.setDepth(1000);
-    this.containerBody = this.playerContainer
-      .body as Phaser.Physics.Arcade.Body;
+    this.containerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body;
   }
 
   create(world: World) {
@@ -36,15 +35,20 @@ export default class RemotePlayer extends Player {
     this.playerContainer.setY(0);
   }
 
+  updateRemotePlayer(data: any) {
+    this.x = data.posX;
+    this.y = data.posY;
+
+    this.playerContainer.x = data.posX;
+    this.playerContainer.y = data.posY;
+  }
+
   update(cursors: NavKeys) {
     const speed = 160;
     let vx = 0;
     let vy = 0;
 
-    if (
-      (cursors?.left.isDown || cursors.A.isDown) &&
-      this.x > PLAYER_SIZE.x / 2
-    ) {
+    if ((cursors?.left.isDown || cursors.A.isDown) && this.x > PLAYER_SIZE.x / 2) {
       vx -= speed;
       this.anims.play("left", true);
     } else if (cursors?.right.isDown || cursors.D.isDown) {
@@ -108,10 +112,7 @@ Phaser.GameObjects.GameObjectFactory.register(
     this.displayList.add(sprite);
     this.updateList.add(sprite);
 
-    this.scene.physics.world.enableBody(
-      sprite,
-      Phaser.Physics.Arcade.DYNAMIC_BODY,
-    );
+    this.scene.physics.world.enableBody(sprite, Phaser.Physics.Arcade.DYNAMIC_BODY);
 
     // const collisionScale = [1, 0.5];
     // sprite.body
@@ -125,13 +126,9 @@ Phaser.GameObjects.GameObjectFactory.register(
     //   );
     //
     //
-    sprite.body
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
+    sprite.body?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y).setOffset(1, PLAYER_SIZE.y / 1.4);
 
-    sprite.containerBody
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
+    sprite.containerBody?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y).setOffset(1, PLAYER_SIZE.y / 1.4);
 
     // sprite.setBounce(0.2);
     // sprite.setCollideWorldBounds(true);

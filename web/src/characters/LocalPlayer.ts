@@ -6,6 +6,7 @@ import store from "../stores";
 import { forceUpdate } from "../stores/inventoryStore";
 import Player from "./Player";
 import { PLAYER_SIZE } from "../config/constant";
+import Network from "../services/Network";
 
 export default class LocalPlayer extends Player {
   world!: World;
@@ -39,7 +40,7 @@ export default class LocalPlayer extends Player {
     this.playerContainer.setY(0);
   }
 
-  update(cursors: NavKeys) {
+  update(cursors: NavKeys, network: Network) {
     const speed = 160;
     const isOnGround = this.body?.blocked.down;
 
@@ -90,6 +91,8 @@ export default class LocalPlayer extends Player {
 
     this.setVelocityX(velocity.x);
     this.containerBody.setVelocityX(velocity.x);
+    if (velocity.x !== 0 || velocity.y !== 0)
+      network.updatePlayer(this.x, this.y);
   }
 }
 
