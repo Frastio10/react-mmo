@@ -3,23 +3,26 @@ import Socket from "../net/Socket";
 import { log } from "../utils";
 import { PacketKeys, createJoinPacket, createPongPacket } from "./Packets";
 
-const networkEvents = new Map<PacketKeys, ((data: any) => void) | undefined>();
+type Method = (data: any) => void;
+const networkEvents = new Map<PacketKeys, Method | undefined>();
 
 type NetworkEventDecorator = (
   target: any,
   propertyKey: string,
-  descriptor: TypedPropertyDescriptor<(data: any) => void>,
+  descriptor: TypedPropertyDescriptor<Method>,
 ) => void;
 
 function NetworkEvent(eventKey: PacketKeys): NetworkEventDecorator {
   return function (
+    // @ts-ignore
     target: any,
+    // @ts-ignore
     propertyKey: string,
-    descriptor: TypedPropertyDescriptor<(data: any) => void>,
+    descriptor: TypedPropertyDescriptor<Method>,
   ) {
     const originalMethod = descriptor.value;
 
-    networkEvents.set(eventKey, originalMethod);
+    if (originalMethod) networkEvents.set(eventKey, originalMethod);
 
     return descriptor;
   };
@@ -46,7 +49,9 @@ export default class Network {
   handleIncomingMessage(json: any) {
     const networkKey = json.ID as PacketKeys;
     const handler = networkEvents.get(networkKey);
+
     if (handler) handler.call(this, json);
+
     // switch (json.ID) {
     //   case PacketKeys.NET_REGISTER:
     //     this.onRegisterPacket(json);

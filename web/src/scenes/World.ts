@@ -385,7 +385,7 @@ export default class World extends Phaser.Scene {
 
   onInitPlayers(data: any) {
     data.players.forEach((player: any) => {
-      this.onRemotePlayerJoined(player as any);
+      this.onRemotePlayerJoined(player);
     });
   }
 
