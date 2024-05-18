@@ -167,7 +167,7 @@ export default class World extends Phaser.Scene {
   hitBlock(tileX: number, tileY: number) {
     if (!this.canHitBlock(tileX, tileY)) return;
     const block = this.getBlockAt(tileX, tileY);
-    block.hit();
+    block.onHit();
   }
 
   setBlock(block: Block) {
@@ -192,7 +192,7 @@ export default class World extends Phaser.Scene {
   hitBackground(tileX: number, tileY: number) {
     if (!this.canHitBackground(tileX, tileY)) return;
     const block = this.getBackgroundAt(tileX, tileY);
-    block.hit();
+    block.onHit();
   }
 
   removeBackgroundAt(tileX: number, tileY: number) {
@@ -344,10 +344,17 @@ export default class World extends Phaser.Scene {
     layer.setCollisionByExclusion(exclusionArray);
   }
 
-  updateCollisions() {
-    this.updateLayerCollision(this.blockLayer!);
-    this.updateLayerCollision(this.backgroundLayer!);
-    log("Collisions updated");
+  updateCollisions(tile?: Block | "all") {
+    if (tile instanceof Block && tile.metadata.isCollide) {
+      log(`Collisions for tile ${tile.position.x}:${tile.position.y} updated`);
+      return tile.tile.setCollision(true);
+    }
+
+    if (tile === "all") {
+      this.updateLayerCollision(this.blockLayer!);
+      this.updateLayerCollision(this.backgroundLayer!);
+      log("All Collisions updated");
+    }
   }
 
   addLocalPlayer() {
@@ -374,11 +381,13 @@ export default class World extends Phaser.Scene {
 
     eventManager.on(EventKey.TILE_UPDATE, this.onTileUpdate, this);
     eventManager.on(EventKey.NET_REGISTERED, this.onNetworkRegistered, this);
-    eventManager.on(EventKey.ANOTHER_PLAYER_JOINED, this.onRemotePlayerJoined, this);
-    eventManager.on(EventKey.ANOTHER_PLAYER_UPDATED, this.onRemotePlayerUpdated, this);
     eventManager.on(EventKey.INIT_PLAYERS, this.onInitPlayers, this);
 
-    eventManager.emit(EventKey.TILE_UPDATE, true);
+    eventManager.on(EventKey.ANOTHER_PLAYER_JOINED, this.onRemotePlayerJoined, this);
+    eventManager.on(EventKey.ANOTHER_PLAYER_UPDATED, this.onRemotePlayerUpdated, this);
+    eventManager.on(EventKey.PLAYER_LEAVE, this.onRemotePlayerLeft, this)
+
+    eventManager.emit(EventKey.TILE_UPDATE, "all");
 
     log("Events attached.");
   }
@@ -387,6 +396,13 @@ export default class World extends Phaser.Scene {
     data.players.forEach((player: any) => {
       this.onRemotePlayerJoined(player);
     });
+  }
+
+  onRemotePlayerLeft(data: any){
+    const player = this.remotePlayersMap.get(data.playerID)
+    if(!player) return
+    this.remotePlayers.remove(player, true, true)
+    this.remotePlayersMap.delete(data.playerID)
   }
 
   onRemotePlayerJoined(data: any) {
@@ -402,9 +418,8 @@ export default class World extends Phaser.Scene {
     targetPlayer?.updateRemotePlayer(data);
   }
 
-  onTileUpdate() {
-    this.updateCollisions();
-    log("Tile updated.");
+  onTileUpdate(tile?: Block | "all") {
+    this.updateCollisions(tile);
   }
 
   // basically convert tile arr to instances of Block class based on the tile data
@@ -427,6 +442,7 @@ export default class World extends Phaser.Scene {
   }
 
   createMap() {
+    // this.scene.make.tilemap
     const map = WorldGenerator.createTilemap(this, this.worldMetadata.blockArr);
     const mapBg = WorldGenerator.createTilemap(this, this.worldMetadata.backgroundArr);
 

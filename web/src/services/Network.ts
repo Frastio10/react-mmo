@@ -51,32 +51,6 @@ export default class Network {
     const handler = networkEvents.get(networkKey);
 
     if (handler) handler.call(this, json);
-
-    // switch (json.ID) {
-    //   case PacketKeys.NET_REGISTER:
-    //     this.onRegisterPacket(json);
-    //     break;
-
-    //   case PacketKeys.JOIN_REQUEST:
-    //     if (json.netID !== this.netID) this.onRemotePlayerJoined(json);
-    //     break;
-
-    //   case PacketKeys.NET_PING:
-    //     this.onPingPacket(json);
-    //     break;
-
-    //   case PacketKeys.ANOTHER_PLAYER_JOINED:
-    //     this.onOtherPlayerJoined(json);
-    //     break;
-
-    //   case PacketKeys.ANOTHER_PLAYER_UPDATED:
-    //     this.onRemotePlayerUpdated(json);
-    //     break;
-
-    //   case PacketKeys.INIT_PLAYERS:
-    //     this.onInitPlayers(json);
-    //     break;
-    // }
   }
 
   handleConnectedNetwork() {
@@ -104,6 +78,12 @@ export default class Network {
     this.status = 1;
 
     eventManager.emit(EventKey.NET_REGISTERED, this.netID);
+  }
+
+  @NetworkEvent(PacketKeys.PLAYER_LEAVE)
+  onLeavePlayer(data: any) {
+    data.playerID = data.netID;
+    eventManager.emit(EventKey.PLAYER_LEAVE, data);
   }
 
   @NetworkEvent(PacketKeys.NET_PING)

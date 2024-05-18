@@ -57,6 +57,8 @@ class Server {
       charset: "23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz",
     });
 
+    console.log("playerlist", players);
+
     extSock.sendF("INIT.PLAYERS", { players });
     extSock.sendF("NET.REGISTER", { netID });
 
@@ -137,7 +139,6 @@ class Server {
   }
 
   broadcast(json, sender) {
-    console.log("broadcasting...", json);
     for (let [_, client] of this.clients) {
       if (sender !== undefined && sender === client.socket) continue; // Skip sending to the sender
       client.socket.json(json);

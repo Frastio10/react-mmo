@@ -52,9 +52,8 @@ export default class Block {
     this.currentHealth = Math.max(health, 0);
   }
 
-  hit(damage = 25) {
+  onHit(damage = 25) {
     if (this.isAir()) return;
-    console.log(this.currentHealth, this.isAir());
     this.setHealth(this.currentHealth - damage);
 
     clearTimeout(this.recoverTimeout);
@@ -74,9 +73,13 @@ export default class Block {
     } else if (this.isBackground()) {
       this.world.removeBackgroundAt(this.position.x, this.position.y);
     }
+
+    this.onDestroyed();
   }
 
-  onDestroyed() {}
+  onDestroyed() {
+    console.log("on destroyed", this);
+  }
 
   getBase64Texture(key: string) {
     return this.world.textures.getBase64(key, this.metadata.id);

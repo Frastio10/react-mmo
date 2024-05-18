@@ -53,8 +53,8 @@ module.exports = class Client {
     switch (packet.getEvent()) {
       case "PONG":
         this.socket.isAlive = true;
-        this.user.posX = packet.data.posX;
-        this.user.posY = packet.data.posY;
+        // this.user.posX = packet.data.posX;
+        // this.user.posY = packet.data.posY;
         break;
     }
   }
@@ -94,7 +94,6 @@ module.exports = class Client {
   }
 
   handleMovement(packet) {
-    console.log(packet.data);
     const playerClient = this.server.clients.get(packet.data.playerID);
     playerClient.user.posX = packet.data.posX;
     playerClient.user.posY = packet.data.posY;
