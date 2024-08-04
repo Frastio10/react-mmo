@@ -6,6 +6,20 @@ export function hackerAlert() {
   log("Nice try buddy");
 }
 
-export function log(data: any){
-  console.log(data)
+export function log(data: any) {
+  console.log(data);
+}
+
+export const NOOP = () => {};
+
+export function safeJSONParse(str: any) {
+  let parsed;
+
+  try {
+    parsed = JSON.parse(str);
+  } catch (e) {
+    // Oh well, but whatever...
+  }
+
+  return parsed; // Could be undefined!
 }

@@ -1,0 +1,20 @@
+{
+  "name": "js-platformer-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "dev": "nodemon src/Server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.18.1",
+    "randomstring": "^1.2.2",
+    "ws": "^8.8.1"
+  }
+}

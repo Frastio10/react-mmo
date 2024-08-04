@@ -5,7 +5,8 @@ import { NavKeys } from "../types/KeyboardState";
 import store from "../stores";
 import { forceUpdate } from "../stores/inventoryStore";
 import Player from "./Player";
-import { PLAYER_SIZE } from "../config/constant";
+import { MAX_VELOCITY, PLAYER_SIZE } from "../config/constant";
+import Network from "../services/Network";
 
 export default class LocalPlayer extends Player {
   world!: World;
@@ -13,7 +14,7 @@ export default class LocalPlayer extends Player {
   breakingRange = [6, 4];
   containerBody: Phaser.Physics.Arcade.Body;
 
-  maxJumpRange = 15;
+  maxJumpRange = 20;
   jumpTimer = 0;
 
   constructor(
@@ -26,8 +27,8 @@ export default class LocalPlayer extends Player {
   ) {
     super(scene, x, y, texture, id, frame);
     this.setDepth(1000);
-    this.containerBody = this.playerContainer
-      .body as Phaser.Physics.Arcade.Body;
+    this.containerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body;
+    // this.setGravity(2600);
   }
 
   create(world: World) {
@@ -39,9 +40,12 @@ export default class LocalPlayer extends Player {
     this.playerContainer.setY(0);
   }
 
-  update(cursors: NavKeys) {
-    const speed = 160;
+  update(cursors: NavKeys, network: Network) {
+    const speed = MAX_VELOCITY.x;
     const isOnGround = this.body?.blocked.down;
+
+    this.setMaxVelocity(MAX_VELOCITY.x, MAX_VELOCITY.y);
+    this.containerBody.setMaxVelocity(MAX_VELOCITY.x, MAX_VELOCITY.y);
 
     const velocity = {
       x: 0,
@@ -77,10 +81,10 @@ export default class LocalPlayer extends Player {
     }
 
     if (controls.jump && this.jumpTimer < this.maxJumpRange) {
-      this.jumpTimer = Math.min(this.jumpTimer + 1, this.maxJumpRange);
+      this.jumpTimer = Math.min(this.jumpTimer + 5, this.maxJumpRange);
 
       // if (this.body?.blocked.down) {
-      velocity.y -= 30 * this.jumpTimer;
+      velocity.y -= 40 * this.jumpTimer;
       this.setVelocityY(velocity.y);
       this.containerBody.setVelocityY(velocity.y);
       // }
@@ -90,6 +94,9 @@ export default class LocalPlayer extends Player {
 
     this.setVelocityX(velocity.x);
     this.containerBody.setVelocityX(velocity.x);
+
+    if (this.body?.velocity.x !== 0 || this.body?.velocity.y !== 0)
+    network.updatePlayer(this.x, this.y);
   }
 }
 
@@ -100,6 +107,7 @@ declare global {
         x: number,
         y: number,
         texture: string,
+        id: string,
         frame?: string | number,
       ): LocalPlayer;
     }
@@ -113,26 +121,20 @@ Phaser.GameObjects.GameObjectFactory.register(
     x: number,
     y: number,
     texture: string,
+    id: string,
     frame?: string | number,
   ) {
-    const sprite = new LocalPlayer(this.scene, x, y, texture, "tai", frame);
+    const sprite = new LocalPlayer(this.scene, x, y, texture, id, frame);
     sprite.create(this.scene as World);
 
     this.displayList.add(sprite);
     this.updateList.add(sprite);
 
-    this.scene.physics.world.enableBody(
-      sprite,
-      Phaser.Physics.Arcade.DYNAMIC_BODY,
-    );
+    this.scene.physics.world.enableBody(sprite, Phaser.Physics.Arcade.DYNAMIC_BODY);
 
-    sprite.body
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
+    sprite.body?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y).setOffset(1, PLAYER_SIZE.y / 1.4);
 
-    sprite.containerBody
-      ?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y)
-      .setOffset(1, PLAYER_SIZE.y / 1.4);
+    sprite.containerBody?.setSize(PLAYER_SIZE.x, PLAYER_SIZE.y).setOffset(1, PLAYER_SIZE.y / 1.4);
 
     // const collisionScale = [1, 0.5];
     // sprite.body
